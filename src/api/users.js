@@ -1,25 +1,23 @@
 import { Router } from "express";
+import { get_user } from "../controller/user.js";
 
 const app = Router();
 
-app.post("/", async (req, res) => {
-    const { user, password } = req.body;
+app.get("/:id", async (req, res) => {
+    const { id } = req.params;
 
-    if(!user || !password || typeof user != "string" || typeof password != "string") {
-        return res.status(400).json({
-            data: `Body must be a JSON with { user: string, password: string }`
+    const user = await get_user(id);
+
+    if(!user) {
+        return res.status(404).json({
+            error: "User not found"
         });
     }
 
-    // if user exist -> Error
+    delete user.password;
+    delete user.email;
 
-    // hash password
-
-    // add user
-
-    // return ok to client!
+    res.status(200).json(user);
 });
-
-app.get("/:user_id");
 
 export default app;

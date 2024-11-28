@@ -8,9 +8,11 @@ import express from "express";
 const app = express();
 app.use(express.json());
 
-import userApi from "./api/users.js";
+import user_api from "./api/users.js";
+import auth_api from "./api/auth.js";
 
-app.use("/users", userApi);
+app.use("/users", user_api);
+app.use("/auth", auth_api);
 
 app.use((req, res) => {
     res.send("Hello World");

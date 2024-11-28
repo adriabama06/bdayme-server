@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY, -- User ID
-  username VARCHAR(255) NOT NULL UNIQUE, -- User username
+  username VARCHAR(64) NOT NULL UNIQUE, -- User username
   email VARCHAR(255) NOT NULL UNIQUE, -- User email
   password TEXT NOT NULL, -- User encrypted password
   created_at TIMESTAMP DEFAULT NOW() -- User creation date

@@ -1,6 +1,9 @@
-import { Pool } from "pg";
+import dotenv from "dotenv";
+dotenv.config();
 
-const pool = new Pool({
+import pg from "pg";
+
+const pg_client = new pg.Client({
     host: process.env.POSTGRES_HOST,
     port: parseInt(process.env.POSTGRES_PORT),
     database: process.env.POSTGRES_DATABASE,
@@ -8,13 +11,15 @@ const pool = new Pool({
     password: process.env.POSTGRES_PASSWORD,
 });
 
-pool.on("connect", () => {
+pg_client.connect();
+
+pg_client.on("connect", () => {
     console.log("[PG] Connected to Postgres");
 });
 
-pool.on("error", (err) => {
+pg_client.on("error", (err) => {
     console.error("[PG] Error:", err);
     console.log("[PG] Exiting...");
 });
 
-export default pool;
+export default pg_client;

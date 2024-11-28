@@ -1,7 +1,7 @@
 name: bdayme
 
 services:
-  bdayme:
+  server:
     build:
       context: .
       dockerfile: Dockerfile
@@ -31,7 +31,6 @@ services:
     image: redis:7.4.1-alpine3.20
     ports:
       - "6379:6379"
-      - "8001:8001"
     environment:
       - REDIS_REPLICATION_MODE=master
 

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { create_user, get_user_by } from "../controller/user.js";
+import middleware_auth from "../middlewares/auth.js";
 
 const app = Router();
 
@@ -75,6 +76,23 @@ app.post("/login", async (req, res) => {
 
     // TODO: Generate token to store in redis
     res.status(200).json(user);
+});
+
+app.post("/logout", middleware_auth, async (req, res) => {
+    const authorization = req.headers.authorization;
+
+    // TODO: Remove from redis the entry
+
+    const status = "ok"; // await redis.delete ?
+
+    if(status == "bad") {
+        return res.status(500).json({
+            error: "Internal error on try to logout this account"
+        });
+    }
+
+    // TODO: Generate token to store in redis
+    res.status(204).end();
 });
 
 export default app;

@@ -16,3 +16,11 @@ Content-Type: application/json
     "email": "adrii@secret.mp4",
     "password": "somepassword"
 }
+
+###
+
+POST http://127.0.0.1:6570/auth/logout
+Content-Type: application/json
+Authorization: helloworld
+
+{"hello": "world"}

@@ -1,11 +1,1 @@
-POST http://127.0.0.1:6570/users <-- REMOVE THIS ENTRY
-Content-Type: application/json
-
-{
-    "user": "adrii",
-    "password": "somepassword"
-}
-
-###
-
 GET http://127.0.0.1:6570/users/user_id

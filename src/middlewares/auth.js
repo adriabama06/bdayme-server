@@ -10,7 +10,7 @@ export default async function middleware_auth(req, res, next) {
     }
 
     // TODO: Use Redis to get the user id
-    const id = 18; /* redis.get(authorization) */
+    const id = 1; /* redis.get(authorization) */
 
     if(!id) {
         return res.status(400).json({

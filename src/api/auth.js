@@ -5,15 +5,15 @@ import middleware_auth from "../middlewares/auth.js";
 const app = Router();
 
 app.post("/register", async (req, res) => {
-    const { username, email, password } = req.body;
+    const { username, email, password, birthday } = req.body;
 
-    if(typeof username != "string" || typeof email != "string" || typeof password != "string") {
+    if(typeof username != "string" || typeof email != "string" || typeof password != "string" || typeof birthday != "string" || isNaN(new Date(birthday))) {
         return res.status(400).json({
-            error: "Body must be a JSON with { username: string, email: string, password: string }"
+            error: "Body must be a JSON with { username: string, email: string, password: string, birthday: string }, for birthday use new Date(year, month, day).toISOString()"
         });
     }
 
-    if(username.length > 64 || email.length > 255 || password.length > 255) {
+    if(username.length > 64 || email.length > 255 || password.length > 255 || birthday.length > 255) {
         return res.status(400).json({
             error: "Username can only have up to 64 charecters and email only up to 255"
         });
@@ -27,7 +27,7 @@ app.post("/register", async (req, res) => {
 
     // TODO: Hash password
 
-    const user = await create_user(username, email, password);
+    const user = await create_user(username, email, password, new Date(birthday));
 
     if(!user) {
         return res.status(500).json({

@@ -4,8 +4,11 @@ Content-Type: application/json
 {
     "username": "adrii",
     "email": "adrii@secret.mp4",
-    "password": "somepassword"
+    "password": "somepassword",
+    "birthday": "2000-11-20T23:00:00.000Z"
 }
+
+# birthday <-- new Date(2000, 10, 21).toISOString()
 
 ###
 

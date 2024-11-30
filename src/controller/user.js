@@ -4,6 +4,7 @@
  * @prop {string} username VARCHAR(255) NOT NULL UNIQUE, -- User username
  * @prop {string} email VARCHAR(255) NOT NULL UNIQUE, -- User email
  * @prop {string} password TEXT NOT NULL, -- User encrypted password
+ * @prop {Date} birthday TIMESTAMP NOT NULL -- User birthday date
  * @prop {Date} created_at TIMESTAMP DEFAULT NOW() -- User creation date
  */
 
@@ -28,7 +29,7 @@ export async function get_user(id) {
 
 /**
  * @returns {Promise<User | undefined>}
- * @param {"id" | "username" | "email" | "password" | "created_at"} mode
+ * @param {"id" | "username" | "email" | "password" | "birthday" | "created_at"} mode
  * @param {string} input
  */
 export async function get_user_by(mode, input) {
@@ -46,12 +47,13 @@ export async function get_user_by(mode, input) {
  * @param {string} username
  * @param {string} email
  * @param {string} password
+ * @param {Date} birthday
  */
-export async function create_user(username, email, password) {
-    if (typeof username != "string" || typeof email != "string" || typeof password != "string") return;
+export async function create_user(username, email, password, birthday) {
+    if (typeof username != "string" || typeof email != "string" || typeof password != "string" || !(birthday instanceof Date)) return;
 
     try {
-        const result = await pg_client.query("INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *", [username, email, password]);
+        const result = await pg_client.query("INSERT INTO users (username, email, password, birthday) VALUES ($1, $2, $3, $4) RETURNING *", [username, email, password, birthday]);
 
         return result.rows[0];
     } catch {
@@ -76,7 +78,7 @@ export async function delete_user(id) {
 }
 
 async function test() {
-    var user = await create_user("testuser", "testuser@gmail.com", "testuserpass");
+    var user = await create_user("testuser", "testuser@gmail.com", "testuserpass", new Date(2000, 10, 21));
     if(!user) user = await get_user(18);
     console.log("User", user);
 

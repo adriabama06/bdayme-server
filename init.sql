@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
   username VARCHAR(64) NOT NULL UNIQUE, -- User username
   email VARCHAR(255) NOT NULL UNIQUE, -- User email
   password TEXT NOT NULL, -- User encrypted password
+  birthday TIMESTAMP NOT NULL, -- User birthday date
   created_at TIMESTAMP DEFAULT NOW() -- User creation date
 );
 

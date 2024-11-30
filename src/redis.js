@@ -8,6 +8,8 @@ const redis_client = redis.createClient({
     port: parseInt(process.env.REDIS_PORT),
 });
 
+redis_client.connect();
+
 redis_client.on("connect", () => {
     console.log("[REDIS] Connected to Redis");
 });

@@ -9,7 +9,7 @@
  */
 
 import pg_client from "../database.js";
-
+import redis_client from "../redis.js";
 
 /**
  * @returns {Promise<User | undefined>}
@@ -18,8 +18,17 @@ import pg_client from "../database.js";
 export async function get_user(id) {
     if (typeof id != "number" && typeof id != "string") return;
 
+    const cached = await redis_client.get(`users:${id}`);
+
+    if(cached) {
+        redis_client.expire(`users:${id}`, 5 * 60); // Reset expiration time
+        return JSON.parse(cached);
+    }
+
     try {
         const result = await pg_client.query("SELECT * FROM users WHERE id = $1", [id]);
+
+        redis_client.set(`users:${id}`, JSON.stringify(result.rows[0]), { EX: 5 * 60, NX: true });
 
         return result.rows[0];
     } catch {
@@ -55,6 +64,8 @@ export async function create_user(username, email, password, birthday) {
     try {
         const result = await pg_client.query("INSERT INTO users (username, email, password, birthday) VALUES ($1, $2, $3, $4) RETURNING *", [username, email, password, birthday]);
 
+        redis_client.set(`users:${id}`, JSON.stringify(result.rows[0]), { EX: 5 * 60, NX: true });
+
         return result.rows[0];
     } catch {
         return;
@@ -70,6 +81,12 @@ export async function delete_user(id) {
 
     try {
         const result = await pg_client.query("DELETE FROM users WHERE id = $1 RETURNING *", [id]);
+
+        redis_client.get(`users:${id}`).then(data => {
+            if(data) {
+                redis_client.del(`users:${id}`);
+            }
+        });
 
         return result.rows[0];
     } catch {

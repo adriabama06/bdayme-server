@@ -21,7 +21,7 @@ export async function get_user(id) {
     const cached = await redis_client.get(`users:${id}`);
 
     if(cached) {
-        redis_client.expire(`users:${id}`, 5 * 60); // Reset expiration time
+        redis_client.expire(`users:${id}`, 5 * 60, "NX"); // Reset expiration time
         return JSON.parse(cached);
     }
 

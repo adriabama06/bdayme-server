@@ -1,6 +1,8 @@
 import { Router } from "express";
+import { v4 as uuid_v4 } from "uuid";
 import { create_user, get_user_by } from "../controller/user.js";
 import middleware_auth from "../middlewares/auth.js";
+import redis_client from "../redis.js";
 
 const app = Router();
 
@@ -74,18 +76,26 @@ app.post("/login", async (req, res) => {
 
     delete user.password;
 
-    // TODO: Generate token to store in redis
+    const token = uuid_v4();
+
+    const status = await redis_client.set(`tokens:${token}`, user.id, { EX: 7 * 24 * 3600, NX: true });
+
+    if(!status) {
+        return res.status(500).json({
+            error: "Error creating token"
+        });
+    }
+
+    res.setHeaders(new Headers({ "Authorization": `Bearer ${token}` }));
     res.status(200).json(user);
 });
 
 app.post("/logout", middleware_auth, async (req, res) => {
-    const authorization = req.headers.authorization;
+    const token = req.token;
 
-    // TODO: Remove from redis the entry
+    const status = await redis_client.del(`tokens:${token}`);
 
-    const status = "ok"; // await redis.delete ?
-
-    if(status == "bad") {
+    if(status < 1) {
         return res.status(500).json({
             error: "Internal error on try to logout this account"
         });

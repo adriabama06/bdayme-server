@@ -24,6 +24,6 @@ Content-Type: application/json
 
 POST http://127.0.0.1:6570/auth/logout
 Content-Type: application/json
-Authorization: helloworld
+Authorization: Bearer testtoken
 
 {"hello": "world"}

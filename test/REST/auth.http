@@ -2,10 +2,9 @@ POST http://127.0.0.1:6570/auth/register
 Content-Type: application/json
 
 {
-    "username": "adrii",
-    "email": "adrii@secret.mp4",
-    "password": "somepassword",
-    "birthday": "2000-11-20T23:00:00.000Z"
+    "username": "devuser",
+    "email": "devuser@example.com",
+    "password": "devpassword"
 }
 
 # birthday <-- new Date(2000, 10, 21).toISOString()
@@ -16,8 +15,8 @@ POST http://127.0.0.1:6570/auth/login
 Content-Type: application/json
 
 {
-    "email": "adrii@secret.mp4",
-    "password": "somepassword"
+    "email": "devuser@example.com",
+    "password": "devpassword"
 }
 
 ###

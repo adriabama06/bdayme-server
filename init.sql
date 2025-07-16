@@ -2,9 +2,13 @@ CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY, -- User ID
   username VARCHAR(64) NOT NULL UNIQUE, -- User username
   email VARCHAR(255) NOT NULL UNIQUE, -- User email
-  password TEXT NOT NULL, -- User encrypted password
-  birthday TIMESTAMP NOT NULL, -- User birthday date
+  password VARCHAR(255) NOT NULL, -- User encrypted password
   created_at TIMESTAMP DEFAULT NOW() -- User creation date
+);
+
+CREATE TABLE IF NOT EXISTS profiles (
+  id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, -- User ID
+  birthday TIMESTAMP NOT NULL -- User birthday date
 );
 
 CREATE TABLE IF NOT EXISTS contacts (
@@ -13,3 +17,12 @@ CREATE TABLE IF NOT EXISTS contacts (
   created_at TIMESTAMP DEFAULT NOW(), -- Timestamp indicating when this relationship was created (automatically filled with the current time upon insert)
   PRIMARY KEY (user_a, user_b) -- The combination of User A and User B ensures that there are no duplicate relationships.
 );
+
+-- Development only: create a default user and profile if not exists
+INSERT INTO users (username, email, password)
+VALUES ('devuser', 'devuser@example.com', 'devpassword')
+ON CONFLICT (username) DO NOTHING;
+
+INSERT INTO profiles (id, birthday)
+SELECT id, '1990-05-01'::timestamp FROM users WHERE username = 'devuser'
+ON CONFLICT (id) DO NOTHING;

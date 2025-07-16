@@ -15,7 +15,7 @@ export default async function middleware_auth(req, res, next) {
 
     const token = authorization.replace("Bearer ", "");
 
-    const id = await redis_client.get(`tokens:${token}`);
+    const id = await redis_client.get(`token:${token}`);
 
     if(!id) {
         return res.status(400).json({
@@ -31,7 +31,7 @@ export default async function middleware_auth(req, res, next) {
         });
     }
 
-    redis_client.expire(`tokens:${token}`, 7 * 24 * 3600, "NX"); // Reset token expire due to the usage
+    redis_client.expire(`token:${token}`, 7 * 24 * 3600, "NX"); // Reset token expire due to the usage
 
     req.user = user;
     req.token = token;

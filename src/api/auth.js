@@ -7,29 +7,29 @@ import redis_client from "../redis.js";
 const app = Router();
 
 app.post("/register", async (req, res) => {
-    const { username, email, password } = req.body;
+    const { email, password } = req.body;
 
-    if(typeof username != "string" || typeof email != "string" || typeof password != "string" /* || typeof birthday != "string" || isNaN(new Date(birthday)) */) {
+    if(typeof email != "string" || typeof password != "string") {
         return res.status(400).json({
-            error: "Body must be a JSON with { username: string, email: string, password: string, birthday: string }, for birthday use new Date(year, month, day).toISOString()"
+            error: "Body must be a JSON with { email: string, password: string }"
         });
     }
 
-    if(username.length > 64 || email.length > 255 || password.length > 255 /* || birthday.length > 255 */) {
+    if(email.length > 255 || password.length > 255 /* || birthday.length > 255 */) {
         return res.status(400).json({
-            error: "Username can only have up to 64 charecters and email only up to 255"
+            error: "Email can only have up to 255 charecters"
         });
     }
 
-    if(await get_user_by("username", username) != undefined || await get_user_by("email", email) != undefined) {
+    if(await get_user_by("email", email) != undefined) {
         return res.status(400).json({
-            error: "Username or email already in use"
+            error: "Email already in use"
         });
     }
 
     // TODO: Hash password
 
-    const user = await create_user(username, email, password /*, new Date(birthday) */);
+    const user = await create_user(email, password /*, new Date(birthday) */);
 
     if(!user) {
         return res.status(500).json({

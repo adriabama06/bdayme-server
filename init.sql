@@ -1,6 +1,5 @@
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY, -- User ID
-  username VARCHAR(64) NOT NULL UNIQUE, -- User username
   email VARCHAR(255) NOT NULL UNIQUE, -- User email
   password VARCHAR(255) NOT NULL, -- User encrypted password
   created_at TIMESTAMP DEFAULT NOW() -- User creation date
@@ -8,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS profiles (
   id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, -- User ID
+  username VARCHAR(64) NOT NULL, -- User username
   birthday TIMESTAMP NOT NULL -- User birthday date
 );
 
@@ -19,10 +19,10 @@ CREATE TABLE IF NOT EXISTS contacts (
 );
 
 -- Development only: create a default user and profile if not exists
-INSERT INTO users (username, email, password)
-VALUES ('devuser', 'devuser@example.com', 'devpassword')
-ON CONFLICT (username) DO NOTHING;
+INSERT INTO users (email, password)
+VALUES ('devuser@example.com', 'devpassword')
+ON CONFLICT (email) DO NOTHING;
 
-INSERT INTO profiles (id, birthday)
-SELECT id, '1990-05-01'::timestamp FROM users WHERE username = 'devuser'
+INSERT INTO profiles (id, username, birthday)
+SELECT id, 'devuser', '1990-05-01'::timestamp FROM users WHERE email = 'devuser@example.com'
 ON CONFLICT (id) DO NOTHING;

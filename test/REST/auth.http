@@ -2,7 +2,6 @@ POST http://127.0.0.1:6570/auth/register
 Content-Type: application/json
 
 {
-    "username": "devuser",
     "email": "devuser@example.com",
     "password": "devpassword"
 }

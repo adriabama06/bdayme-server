@@ -15,7 +15,6 @@ app.get("/:id", async (req, res) => {
     }
 
     delete user.password;
-    delete user.email;
 
     res.status(200).json(user);
 });

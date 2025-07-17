@@ -1,0 +1,14 @@
+GET http://127.0.0.1:6570/friends
+Authorization: Bearer testtoken
+
+###
+
+POST http://127.0.0.1:6570/friends/add/user_id
+Content-Type: application/json
+Authorization: Bearer testtoken
+
+###
+
+POST http://127.0.0.1:6570/friends/remove/user_id
+Content-Type: application/json
+Authorization: Bearer testtoken

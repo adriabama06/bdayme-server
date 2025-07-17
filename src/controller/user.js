@@ -19,7 +19,7 @@ export async function get_user(id) {
     const cached = await redis_client.get(`user:${id}`);
 
     if(cached) {
-        redis_client.expire(`user:${id}`, 5 * 60); // Reset expiration time
+        await redis_client.expire(`user:${id}`, 5 * 60); // Reset expiration time
         return JSON.parse(cached);
     }
 
@@ -28,7 +28,7 @@ export async function get_user(id) {
 
         if(result.rowCount == 0) return;
 
-        redis_client.set(`user:${id}`, JSON.stringify(result.rows[0]), { EX: 5 * 60, NX: true });
+        await redis_client.set(`user:${id}`, JSON.stringify(result.rows[0]), { EX: 5 * 60, NX: true });
 
         return result.rows[0];
     } catch {
@@ -62,7 +62,7 @@ export async function create_user(email, password) {
     try {
         const result = await pg_client.query("INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *", [email, password]);
 
-        redis_client.set(`user:${id}`, JSON.stringify(result.rows[0]), { EX: 5 * 60, NX: true });
+        await redis_client.set(`user:${id}`, JSON.stringify(result.rows[0]), { EX: 5 * 60, NX: true });
 
         return result.rows[0];
     } catch {
@@ -80,11 +80,7 @@ export async function delete_user(id) {
     try {
         const result = await pg_client.query("DELETE FROM users WHERE id = $1 RETURNING *", [id]);
 
-        redis_client.get(`user:${id}`).then(data => {
-            if(data) {
-                redis_client.del(`user:${id}`);
-            }
-        });
+        await redis_client.del(`user:${id}`);
 
         return result.rows[0];
     } catch {
@@ -104,7 +100,7 @@ export async function update_user(id, option, value) {
     try {
         const result = await pg_client.query(`UPDATE users SET ${option} = $2 WHERE id = $1 RETURNING *`, [id, value]);
 
-        redis_client.set(`user:${id}`, JSON.stringify(result.rows[0]), { EX: 5 * 60 });
+        await redis_client.set(`user:${id}`, JSON.stringify(result.rows[0]), { EX: 5 * 60 });
 
         return result.rows[0];
     } catch {

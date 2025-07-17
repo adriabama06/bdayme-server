@@ -18,7 +18,7 @@ export async function get_profile(id) {
     const cached = await redis_client.get(`profile:${id}`);
 
     if(cached) {
-        redis_client.expire(`profile:${id}`, 5 * 60); // Reset expiration time
+        await redis_client.expire(`profile:${id}`, 5 * 60); // Reset expiration time
         return JSON.parse(cached);
     }
 
@@ -27,7 +27,7 @@ export async function get_profile(id) {
 
         if(result.rowCount == 0) return;
 
-        redis_client.set(`profile:${id}`, JSON.stringify(result.rows[0]), { EX: 5 * 60, NX: true });
+        await redis_client.set(`profile:${id}`, JSON.stringify(result.rows[0]), { EX: 5 * 60, NX: true });
 
         return result.rows[0];
     } catch {
@@ -62,7 +62,7 @@ export async function create_profile(id, username, birthday) {
     try {
         const result = await pg_client.query("INSERT INTO profiles (id, username, birthday) VALUES ($1, $2, $3) RETURNING *", [id, username, birthday]);
 
-        redis_client.set(`profile:${id}`, JSON.stringify(result.rows[0]), { EX: 5 * 60, NX: true });
+        await redis_client.set(`profile:${id}`, JSON.stringify(result.rows[0]), { EX: 5 * 60, NX: true });
 
         return result.rows[0];
     } catch {
@@ -80,11 +80,7 @@ export async function delete_profile(id) {
     try {
         const result = await pg_client.query("DELETE FROM profiles WHERE id = $1 RETURNING *", [id]);
 
-        redis_client.get(`profile:${id}`).then(data => {
-            if(data) {
-                redis_client.del(`profile:${id}`);
-            }
-        });
+        await redis_client.del(`profile:${id}`);
 
         return result.rows[0];
     } catch {
@@ -104,7 +100,7 @@ export async function update_profile(id, option, value) {
     try {
         const result = await pg_client.query(`UPDATE profiles SET ${option} = $2 WHERE id = $1 RETURNING *`, [id, value]);
 
-        redis_client.set(`profile:${id}`, JSON.stringify(result.rows[0]), { EX: 5 * 60 });
+        await redis_client.set(`profile:${id}`, JSON.stringify(result.rows[0]), { EX: 5 * 60 });
 
         return result.rows[0];
     } catch (err) {

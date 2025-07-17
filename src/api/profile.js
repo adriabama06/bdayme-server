@@ -47,7 +47,7 @@ app.post("/update/:option", middleware_auth, async (req, res) => {
         });
     }
 
-    let value = req.body[option];
+    let value = req.body[option]; // TODO: Use key, value for multiple patch in a single request
 
     if(option == "birthday") {
         const value_date = new Date(value);

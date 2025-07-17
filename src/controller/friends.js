@@ -18,7 +18,7 @@ export async function get_friends(id) {
     const cached = await redis_client.get(`friends:${id}`);
 
     if(cached) {
-        redis_client.expire(`friends:${id}`, 5 * 60); // Reset expiration time
+        await redis_client.expire(`friends:${id}`, 5 * 60); // Reset expiration time
         return JSON.parse(cached);
     }
 
@@ -27,7 +27,7 @@ export async function get_friends(id) {
 
         if(result.rowCount == 0) { result.rows = []; }
 
-        redis_client.set(`friends:${id}`, JSON.stringify(result.rows), { EX: 5 * 60, NX: true });
+        await redis_client.set(`friends:${id}`, JSON.stringify(result.rows), { EX: 5 * 60, NX: true });
 
         return result.rows;
     } catch {
@@ -36,7 +36,7 @@ export async function get_friends(id) {
 }
 
 /**
- * @returns {Promise<Friend[] | undefined>}
+ * @returns {Promise<Friend | undefined>}
  * @param {number | string} user_a
  * @param {number | string} user_b
  */
@@ -44,20 +44,19 @@ export async function create_friend(user_a, user_b) {
     if (typeof user_a != "number" && typeof user_a != "string" || typeof user_b != "number" && typeof user_b != "string") return;
 
     try {
-        const result = await pg_client.query("INSERT INTO friends (user_a, user_b) VALUES ($1, $2) RETURNING *", [id, username, birthday]);
-        
-        console.log("Dev log:");
-        console.log(result.rows);
+        if(parseInt(user_a) == parseInt(user_b)) return;
+
+        const result = await pg_client.query("INSERT INTO friends (user_a, user_b) VALUES ($1, $2) RETURNING *", [user_a, user_b]);
 
         if(result.rowCount == 0) return;
 
-        const friends = await get_friends(user_a);
+        // Delete cache to prevent errors
+        await Promise.all([
+            redis_client.del(`friends:${user_a}`),
+            redis_client.del(`friends:${user_b}`)
+        ]);
 
-        friends.push(result.rows[0]);
-
-        redis_client.set(`friends:${id}`, JSON.stringify(friends), { EX: 5 * 60, XX: true });
-
-        return friends;
+        return result.rows[0];
     } catch {
         return;
     }
@@ -72,16 +71,20 @@ export async function delete_friend(user_a, user_b) {
     if (typeof user_a != "number" && typeof user_a != "string" || typeof user_b != "number" && typeof user_b != "string") return;
 
     try {
-        const result = await pg_client.query("DELETE FROM friends WHERE (user_a = $1 AND user_b = $2) OR (user_a = $2 OR user_b = $1)", [user_a, user_b]);
+        if(parseInt(user_a) == parseInt(user_b)) return;
 
-        redis_client.get(`friends:${id}`).then(data => {
-            if(data) {
-                redis_client.del(`friends:${id}`);
-            }
-        });
+        const result = await pg_client.query("DELETE FROM friends WHERE (user_a = $1 AND user_b = $2) OR (user_a = $2 OR user_b = $1) RETURNING *", [user_a, user_b]);
+
+        if(result.rowCount == 0) return;
+
+        await Promise.all([
+            redis_client.del(`friends:${user_a}`),
+            redis_client.del(`friends:${user_b}`)
+        ]);
 
         return result.rows[0];
-    } catch {
+    } catch (Err) {
+        console.log(Err);
         return;
     }
 }

@@ -19,10 +19,22 @@ CREATE TABLE IF NOT EXISTS friends (
 );
 
 -- Development only: create a default user and profile if not exists
+
 INSERT INTO users (email, password)
-VALUES ('devuser@example.com', 'devpassword')
+VALUES 
+  ('devuser@example.com', 'devpassword'),
+  ('alice@example.com', 'alicepassword'),
+  ('bob@example.com', 'bobpassword')
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO profiles (id, username, birthday)
 SELECT id, 'devuser', '1990-05-01'::timestamp FROM users WHERE email = 'devuser@example.com'
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO profiles (id, username, birthday)
+SELECT id, 'alice', '1992-08-15'::timestamp FROM users WHERE email = 'alice@example.com'
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO profiles (id, username, birthday)
+SELECT id, 'bob', '1988-12-22'::timestamp FROM users WHERE email = 'bob@example.com'
 ON CONFLICT (id) DO NOTHING;

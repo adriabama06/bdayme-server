@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS profiles (
 );
 
 CREATE TABLE IF NOT EXISTS friends (
-  user_a INT REFERENCES users(id) ON DELETE CASCADE, -- ID User A
-  user_b INT REFERENCES users(id) ON DELETE CASCADE, -- ID User B
+  user_a INT REFERENCES users(id) ON DELETE CASCADE, -- ID User A (The person who request the friend creation)
+  user_b INT REFERENCES users(id) ON DELETE CASCADE, -- ID User B (The person who accepts the friend)
   created_at TIMESTAMP DEFAULT NOW(), -- Timestamp indicating when this relationship was created (automatically filled with the current time upon insert)
   PRIMARY KEY (user_a, user_b) -- The combination of User A and User B ensures that there are no duplicate relationships.
 );

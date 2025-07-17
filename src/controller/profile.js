@@ -18,7 +18,7 @@ export async function get_profile(id) {
     const cached = await redis_client.get(`profile:${id}`);
 
     if(cached) {
-        redis_client.expire(`profile:${id}`, 5 * 60, "NX"); // Reset expiration time
+        redis_client.expire(`profile:${id}`, 5 * 60); // Reset expiration time
         return JSON.parse(cached);
     }
 

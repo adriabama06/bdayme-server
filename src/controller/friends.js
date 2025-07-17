@@ -36,6 +36,25 @@ export async function get_friends(id) {
 }
 
 /**
+ * @returns {Promise<boolean | undefined>}
+ * @param {number | string} user_a
+ * @param {number | string} user_b
+ */
+export async function has_friend(user_a, user_b) {
+    if (typeof user_a != "number" && typeof user_a != "string" || typeof user_b != "number" && typeof user_b != "string") return;
+
+    if(parseInt(user_a) == parseInt(user_b)) return;
+
+    try {
+        const result = await pg_client.query("SELECT 1 FROM friends WHERE (user_a = $1 AND user_b = $2) OR (user_a = $2 AND user_b = $1)", [user_a, user_b]);
+
+        return result.rowCount > 0;
+    } catch {
+        return;
+    }
+}
+
+/**
  * @returns {Promise<Friend | undefined>}
  * @param {number | string} user_a
  * @param {number | string} user_b
@@ -73,7 +92,7 @@ export async function delete_friend(user_a, user_b) {
     try {
         if(parseInt(user_a) == parseInt(user_b)) return;
 
-        const result = await pg_client.query("DELETE FROM friends WHERE (user_a = $1 AND user_b = $2) OR (user_a = $2 OR user_b = $1) RETURNING *", [user_a, user_b]);
+        const result = await pg_client.query("DELETE FROM friends WHERE (user_a = $1 AND user_b = $2) OR (user_a = $2 AND user_b = $1) RETURNING *", [user_a, user_b]);
 
         if(result.rowCount == 0) return;
 

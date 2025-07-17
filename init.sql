@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   birthday TIMESTAMP NOT NULL -- User birthday date
 );
 
-CREATE TABLE IF NOT EXISTS contacts (
+CREATE TABLE IF NOT EXISTS friends (
   user_a INT REFERENCES users(id) ON DELETE CASCADE, -- ID User A
   user_b INT REFERENCES users(id) ON DELETE CASCADE, -- ID User B
   created_at TIMESTAMP DEFAULT NOW(), -- Timestamp indicating when this relationship was created (automatically filled with the current time upon insert)

@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { v4 as uuid_v4 } from "uuid";
+import crypto from "crypto";
+
 import { create_user, get_user_by } from "../controller/user.js";
 import middleware_auth from "../middlewares/auth.js";
 import redis_client from "../redis.js";
@@ -15,7 +17,7 @@ app.post("/register", async (req, res) => {
         });
     }
 
-    if(email.length > 255 || password.length > 255 /* || birthday.length > 255 */) {
+    if(email.length > 255 || password.length > 255) {
         return res.status(400).json({
             error: "Email can only have up to 255 charecters"
         });
@@ -27,9 +29,7 @@ app.post("/register", async (req, res) => {
         });
     }
 
-    // TODO: Hash password
-
-    const user = await create_user(email, password /*, new Date(birthday) */);
+    const user = await create_user(email, password);
 
     if(!user) {
         return res.status(500).json({
@@ -39,7 +39,6 @@ app.post("/register", async (req, res) => {
 
     delete user.password;
 
-    // TODO: Maybe pre generae a token to directly auth the user?
     res.status(200).json(user);
 });
 
@@ -58,8 +57,6 @@ app.post("/login", async (req, res) => {
         });
     }
 
-    // TODO: Hash password
-
     const user = await get_user_by("email", email);
 
     if(!user) {
@@ -68,12 +65,11 @@ app.post("/login", async (req, res) => {
         });
     }
 
-    if(user.password != password) {
+    if(user.password != crypto.createHash('sha256').update(password).digest('hex')) {
         return res.status(400).json({
             error: "Incorrect password"
         });
     }
-
 
     const token = uuid_v4();
 
@@ -102,7 +98,6 @@ app.post("/logout", middleware_auth, async (req, res) => {
         });
     }
 
-    // TODO: Generate token to store in redis
     res.status(204).end();
 });
 

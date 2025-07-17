@@ -6,6 +6,8 @@
  * @prop {Date} created_at TIMESTAMP DEFAULT NOW() -- User creation date
 */
 
+import crypto from "crypto";
+
 import pg_client from "../database.js";
 import redis_client from "../redis.js";
 
@@ -60,9 +62,11 @@ export async function create_user(email, password) {
     if (typeof email != "string" || typeof password != "string") return;
 
     try {
-        const result = await pg_client.query("INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *", [email, password]);
+        const result = await pg_client.query("INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *", [email, crypto.createHash('sha256').update(password).digest('hex')]);
 
-        await redis_client.set(`user:${id}`, JSON.stringify(result.rows[0]), { EX: 5 * 60, NX: true });
+        if(result.rowCount == 0) return;
+
+        await redis_client.set(`user:${result.rows[0].id}`, JSON.stringify(result.rows[0]), { EX: 5 * 60, NX: true });
 
         return result.rows[0];
     } catch {

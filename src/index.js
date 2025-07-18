@@ -7,6 +7,7 @@ import express from "express";
 
 const app = express();
 app.use(express.json());
+app.set('trust proxy', process.env.TRUST_PROXY?.split(",") ?? []); // https://expressjs.com/en/guide/behind-proxies.html
 
 import user_api from "./api/users.js";
 import auth_api from "./api/auth.js";

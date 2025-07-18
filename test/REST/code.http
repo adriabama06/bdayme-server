@@ -1,0 +1,8 @@
+POST http://127.0.0.1:6570/code/create
+Authorization: Bearer testtoken
+
+###
+
+GET http://127.0.0.1:6570/code/accept/generated_code
+Content-Type: application/json
+Authorization: Bearer testtoken

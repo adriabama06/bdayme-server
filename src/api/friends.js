@@ -20,6 +20,8 @@ app.get("/", middleware_auth, async (req, res) => {
 });
 
 app.get("/has/:id", middleware_auth, async (req, res) => {
+    // Yes, I know I can use the list and do a `for` to search if it has or not, but is to incrase the low SQL usage in this code 
+    // maybe in the future I will change this code to what I said
     const is_ok = await has_friend(req.user.id, req.params.id);
 
     if(is_ok == undefined) {

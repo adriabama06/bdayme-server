@@ -38,16 +38,16 @@ app.get("/has/:id", middleware_auth, async (req, res) => {
 app.post("/add/:id", middleware_auth, async (req, res) => {
     const { id } = req.params;
 
-    const friends = await create_friend(req.user.id, id);
+    const friend = await create_friend(req.user.id, id);
 
-    if(!friends) {
+    if(!friend) {
         return res.status(500).json({
             error: "Error adding your friend"
         });
     }
 
     res.status(200).json({
-        data: friends
+        data: friend
     });
 });
 

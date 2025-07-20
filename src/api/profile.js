@@ -4,6 +4,20 @@ import middleware_auth from "../middlewares/auth.js";
 
 const app = Router();
 
+app.get("/", middleware_auth, async (req, res) => {
+    const profile = await get_profile(req.user.id);
+
+    if(!profile) {
+        return res.status(404).json({
+            error: "Profile not found"
+        });
+    }
+
+    res.status(200).json({
+        data: profile
+    });
+});
+
 app.get("/:id", async (req, res) => {
     const { id } = req.params;
 

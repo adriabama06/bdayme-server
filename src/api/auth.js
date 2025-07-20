@@ -39,7 +39,9 @@ app.post("/register", async (req, res) => {
 
     delete user.password;
 
-    res.status(200).json(user);
+    res.status(200).json({
+        data: user
+    });
 });
 
 app.post("/login", async (req, res) => {
@@ -84,7 +86,9 @@ app.post("/login", async (req, res) => {
     delete user.password;
 
     res.setHeaders(new Headers({ "Authorization": `Bearer ${token}` }));
-    res.status(200).json(user);
+    res.status(200).json({
+        data: user
+    });
 });
 
 app.post("/logout", middleware_auth, async (req, res) => {

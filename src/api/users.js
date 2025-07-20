@@ -16,7 +16,9 @@ app.get("/:id", async (req, res) => {
 
     delete user.password;
 
-    res.status(200).json(user);
+    res.status(200).json({
+        data: user
+    });
 });
 
 export default app;

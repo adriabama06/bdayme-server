@@ -15,7 +15,9 @@ app.get("/:id", async (req, res) => {
         });
     }
 
-    res.status(200).json(profile);
+    res.status(200).json({
+        data: profile
+    });
 });
 
 app.post("/create", middleware_auth, async (req, res) => {
@@ -35,7 +37,9 @@ app.post("/create", middleware_auth, async (req, res) => {
         });
     }
 
-    res.status(200).json(profile);
+    res.status(200).json({
+        data: profile
+    });
 });
 
 app.post("/update/:option", middleware_auth, async (req, res) => {
@@ -69,7 +73,9 @@ app.post("/update/:option", middleware_auth, async (req, res) => {
         });
     }
 
-    res.status(200).json(profile);
+    res.status(200).json({
+        data: profile
+    });
 });
 
 export default app;

@@ -4,8 +4,10 @@ dotenv.config();
 import redis from "redis";
 
 const redis_client = redis.createClient({
-    host: process.env.REDIS_HOST,
-    port: parseInt(process.env.REDIS_PORT),
+    socket: {
+        host: process.env.REDIS_HOST,
+        port: parseInt(process.env.REDIS_PORT)
+    }
 });
 
 redis_client.connect();

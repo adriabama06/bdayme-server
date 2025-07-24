@@ -65,6 +65,8 @@ export async function create_friend(user_a, user_b) {
     try {
         if(parseInt(user_a) == parseInt(user_b)) return;
 
+        if(await has_friend(user_a, user_b)) return;
+
         const result = await pg_client.query("INSERT INTO friends (user_a, user_b) VALUES ($1, $2) RETURNING *", [user_a, user_b]);
 
         if(result.rowCount == 0) return;

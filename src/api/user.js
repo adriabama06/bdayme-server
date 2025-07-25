@@ -54,7 +54,7 @@ app.post("/update", middleware_auth, async (req, res) => {
     let cursor = 0;
     do {
         const reply = await redis_client.scan(cursor, {
-            MATCH: 'tokens:*',
+            MATCH: "token:*",
             COUNT: 100
         });
 
@@ -74,7 +74,9 @@ app.post("/update", middleware_auth, async (req, res) => {
         }
     } while (cursor !== 0);
 
-    await redis_client.del(keysToDelete);
+    if(keysToDelete.length > 0) {
+        await redis_client.del(keysToDelete);
+    }
 
     const newUser = await get_user(req.user.id);
 

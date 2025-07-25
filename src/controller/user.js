@@ -111,21 +111,3 @@ export async function update_user(id, option, value) {
         return;
     }
 }
-
-async function test() {
-    var user = await create_user("testuser@gmail.com", "testuserpass");
-    if(!user) user = await get_user(2);
-    console.log("User", user);
-
-
-    const user_check_info_id = await get_user(user.id);
-    console.log("User check info [ID]", user_check_info_id);
-
-    const user_check_info_email = await get_user_by("email", user.email);
-    console.log("User check info [EMAIL]", user_check_info_email);
-
-    // const user_deleted = await delete_user(user.id);
-    // console.log("User deleted", user_deleted);
-}
-
-// setTimeout(test, 1000);

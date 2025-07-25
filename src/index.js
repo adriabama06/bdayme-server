@@ -9,14 +9,14 @@ const app = express();
 app.use(express.json());
 app.set('trust proxy', process.env.TRUST_PROXY?.split(",") ?? []); // https://expressjs.com/en/guide/behind-proxies.html
 
-import user_api from "./api/users.js";
+import user_api from "./api/user.js";
 import auth_api from "./api/auth.js";
 import profile_api from "./api/profile.js";
 import friends_api from "./api/friends.js";
 import code_api from "./api/code.js";
 
-app.use("/users", user_api);
 app.use("/auth", auth_api);
+app.use("/user", user_api);
 app.use("/profile", profile_api);
 app.use("/friends", friends_api);
 app.use("/code", code_api);

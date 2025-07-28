@@ -20,21 +20,21 @@ CREATE TABLE IF NOT EXISTS friends (
 
 -- Development only: create a default user and profile if not exists
 
-INSERT INTO users (email, password)
-VALUES 
-  ('devuser@example.com', 'd0cc333979497e7263f6288c1aacd6f2cdc659e9efad861265095b7db9060e6a'), -- devpassword
-  ('alice@example.com', 'cb824cd5fe4950a77e36776d275f8f7039682babd490d5da3bc8fd31f4c2254c'), -- alicepassword
-  ('bob@example.com', 'bc786c379d8b4334faa1f5ed4428d53ed5fbf6247a5974a72eac7fd5c13410d8') -- bobpassword
-ON CONFLICT (email) DO NOTHING;
+-- INSERT INTO users (email, password)
+-- VALUES 
+--   ('devuser@example.com', 'd0cc333979497e7263f6288c1aacd6f2cdc659e9efad861265095b7db9060e6a'), -- devpassword
+--   ('alice@example.com', 'cb824cd5fe4950a77e36776d275f8f7039682babd490d5da3bc8fd31f4c2254c'), -- alicepassword
+--   ('bob@example.com', 'bc786c379d8b4334faa1f5ed4428d53ed5fbf6247a5974a72eac7fd5c13410d8') -- bobpassword
+-- ON CONFLICT (email) DO NOTHING;
 
-INSERT INTO profiles (id, username, birthday)
-SELECT id, 'devuser', '1990-05-01'::timestamp FROM users WHERE email = 'devuser@example.com'
-ON CONFLICT (id) DO NOTHING;
+-- INSERT INTO profiles (id, username, birthday)
+-- SELECT id, 'devuser', '1990-05-01'::timestamp FROM users WHERE email = 'devuser@example.com'
+-- ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO profiles (id, username, birthday)
-SELECT id, 'alice', '1992-08-15'::timestamp FROM users WHERE email = 'alice@example.com'
-ON CONFLICT (id) DO NOTHING;
+-- INSERT INTO profiles (id, username, birthday)
+-- SELECT id, 'alice', '1992-08-15'::timestamp FROM users WHERE email = 'alice@example.com'
+-- ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO profiles (id, username, birthday)
-SELECT id, 'bob', '1988-12-22'::timestamp FROM users WHERE email = 'bob@example.com'
-ON CONFLICT (id) DO NOTHING;
+-- INSERT INTO profiles (id, username, birthday)
+-- SELECT id, 'bob', '1988-12-22'::timestamp FROM users WHERE email = 'bob@example.com'
+-- ON CONFLICT (id) DO NOTHING;

@@ -8,6 +8,6 @@ COPY . /app
 
 RUN npm i
 
-EXPOSE 80
+EXPOSE 6570
 
 ENTRYPOINT [ "node", "." ]

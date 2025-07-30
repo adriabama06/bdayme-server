@@ -18,9 +18,15 @@ app.get("/", middleware_auth, async (req, res) => {
 app.post("/update", middleware_auth, async (req, res) => {
     const data = req.body;
 
-    if (typeof data.email !== "string" || typeof data.password !== "string" || data.email.length > 255 || data.password.length > 255) {
+    if (typeof data.email !== "string" || typeof data.password !== "string") {
         return res.status(400).json({
             error: "Email & Password must be a string"
+        });
+    }
+
+    if(email.length > 255 || password.length > 255 || email.length < 5 || password.length < 8) {
+        return res.status(400).json({
+            error: "Email and password can't be more than 255 charecters or email can't be shorter than 5 and password can't be shorter than 8 char"
         });
     }
 

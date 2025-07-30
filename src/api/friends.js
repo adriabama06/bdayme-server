@@ -20,9 +20,15 @@ app.get("/", middleware_auth, async (req, res) => {
 });
 
 app.get("/has/:id", middleware_auth, async (req, res) => {
+    if(isNaN(parseInt(req.params.id))) {
+        return res.status(400).json({
+            error: "Id must be a int"
+        });
+    }
+
     // Yes, I know I can use the list and do a `for` to search if it has or not, but is to incrase the low SQL usage in this code 
     // maybe in the future I will change this code to what I said
-    const is_ok = await has_friend(req.user.id, req.params.id);
+    const is_ok = await has_friend(req.user.id, parseInt(req.params.id));
 
     if(is_ok == undefined) {
         return res.status(500).json({
@@ -36,7 +42,13 @@ app.get("/has/:id", middleware_auth, async (req, res) => {
 });
 
 app.post("/add/:id", middleware_auth, async (req, res) => {
-    const { id } = req.params;
+    if(isNaN(parseInt(req.params.id))) {
+        return res.status(400).json({
+            error: "Id must be a int"
+        });
+    }
+    
+    const id = parseInt(req.params.id);
 
     const friend = await create_friend(req.user.id, id);
 
@@ -52,7 +64,13 @@ app.post("/add/:id", middleware_auth, async (req, res) => {
 });
 
 app.post("/remove/:id", middleware_auth, async (req, res) => {
-    const { id } = req.params;
+    if(isNaN(parseInt(req.params.id))) {
+        return res.status(400).json({
+            error: "Id must be a int"
+        });
+    }
+    
+    const id = parseInt(req.params.id);
 
     const friend = await delete_friend(req.user.id, id);
 

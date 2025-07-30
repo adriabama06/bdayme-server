@@ -59,6 +59,8 @@ export async function get_profile_by(mode, input) {
 export async function create_profile(id, username, birthday) {
     if (typeof id != "number" && typeof id != "string" || typeof username != "string" || !(birthday instanceof Date)) return;
 
+    if(username.length <= 0) return;
+
     try {
         const result = await pg_client.query("INSERT INTO profiles (id, username, birthday) VALUES ($1, $2, $3) RETURNING *", [id, username, birthday]);
 

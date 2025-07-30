@@ -17,9 +17,9 @@ app.post("/register", async (req, res) => {
         });
     }
 
-    if(email.length > 255 || password.length > 255) {
+    if(email.length > 255 || password.length > 255 || email.length < 5 || password.length < 8) {
         return res.status(400).json({
-            error: "Email can only have up to 255 charecters"
+            error: "Email and password can't be more than 255 charecters or email can't be shorter than 5 and password can't be shorter than 8 char"
         });
     }
 
@@ -53,9 +53,9 @@ app.post("/login", async (req, res) => {
         });
     }
 
-    if(email.length > 255 || password.length > 255) {
+    if(email.length > 255 || password.length > 255 || email.length < 5 || password.length < 8) {
         return res.status(400).json({
-            error: "Username can only have up to 64 charecters and email only up to 255"
+            error: "Email and password can't be more than 255 charecters or email can't be shorter than 5 and password can't be shorter than 8 char"
         });
     }
 

@@ -19,7 +19,13 @@ app.get("/", middleware_auth, async (req, res) => {
 });
 
 app.get("/:id", async (req, res) => {
-    const { id } = req.params;
+    if(isNaN(parseInt(req.params.id))) {
+        return res.status(400).json({
+            error: "Id must be a int"
+        });
+    }
+
+    const id = parseInt(req.params.id);
 
     const profile = await get_profile(id);
 
@@ -40,6 +46,12 @@ app.post("/create", middleware_auth, async (req, res) => {
     if(typeof username != "string" || typeof birthday != "string" || isNaN(new Date(birthday))) {
         return res.status(400).json({
             error: "Body must be a JSON with { username: string, birthday: string }, for birthday use `new Date(year, month, day).toISOString()`"
+        });
+    }
+
+    if(username.length <= 0) {
+        return res.status(400).json({
+            error: "Username can't be a empty string"
         });
     }
 

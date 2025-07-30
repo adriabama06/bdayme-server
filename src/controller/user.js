@@ -61,6 +61,8 @@ export async function get_user_by(mode, input) {
 export async function create_user(email, password) {
     if (typeof email != "string" || typeof password != "string") return;
 
+    if(email.length > 255 || password.length > 255 || email.length < 5 || password.length < 8) return;
+
     try {
         const result = await pg_client.query("INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *", [email, crypto.createHash('sha256').update(password).digest('hex')]);
 

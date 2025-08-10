@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { MAX_ABOUTME_LENGTH } from "./controller/profile";
+import { MAX_ABOUTME_LENGTH } from "./controller/profile.js";
 
 import pg from "pg";
 

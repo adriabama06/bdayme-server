@@ -6,6 +6,8 @@
  * @prop {Date} birthday TIMESTAMP NOT NULL -- User birthday date
  */
 
+export const MAX_ABOUTME_LENGTH = 1024;
+
 import pg_client from "../database.js";
 import redis_client from "../redis.js";
 
@@ -60,7 +62,7 @@ export async function get_profile_by(mode, input) {
 export async function create_profile(id, username, birthday) {
     if (typeof id != "number" && typeof id != "string" || typeof username != "string" || !(birthday instanceof Date)) return;
 
-    if(username.length <= 0) return;
+    if(username.length <= 0 || username.length > 64) return;
 
     try {
         const result = await pg_client.query("INSERT INTO profiles (id, username, birthday) VALUES ($1, $2, $3) RETURNING *", [id, username, birthday]);
@@ -108,5 +110,44 @@ export async function update_profile(id, option, value) {
         return result.rows[0];
     } catch (err) {
         return;
+    }
+}
+
+/**
+ * @returns {boolean}
+ * @param {string} option
+ */
+export function is_valid_option_profile(option) {
+    return ["username", "birthday", "aboutme"].includes(option);
+}
+
+/**
+ * @returns {any | undefined}
+ * @param {string} option
+ * @param {any} value
+ */
+export function parse_value_from_option_profile(option, value) {
+    switch (option) {
+        case "username":
+            if(typeof value != "string" || value.length <= 0 || value.length > 64) return undefined;
+
+            return value;
+        
+        case "birthday":
+            const value_date = new Date(value);
+
+            if(isNaN(value_date)) return undefined;
+
+            return value_date;
+
+        case "aboutme":
+            if(typeof value !== "string") return
+
+            if(value.length >= MAX_ABOUTME_LENGTH) return value.slice(0, MAX_ABOUTME_LENGTH);
+            
+            return value;
+
+        default:
+            return undefined;
     }
 }

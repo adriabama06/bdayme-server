@@ -1,7 +1,7 @@
 import crypto from "crypto";
 
 import { Router } from "express";
-import { get_user, update_user } from "../controller/user.js";
+import { get_user, is_valid_option_user, parse_value_from_option_user, update_user } from "../controller/user.js";
 import middleware_auth from "../middlewares/auth.js";
 import redis_client from "../redis.js";
 
@@ -18,43 +18,33 @@ app.get("/", middleware_auth, async (req, res) => {
 app.post("/update", middleware_auth, async (req, res) => {
     const data = req.body;
 
-    if (typeof data.email !== "string" || typeof data.password !== "string") {
-        return res.status(400).json({
-            error: "Email & Password must be a string"
-        });
-    }
+    for (const key in data) {
+        if(!is_valid_option_user(key)) {
+            return res.status(400).json({
+                error: `Invalid option to update: ${key}`
+            });
+        }
 
-    if(email.length > 255 || password.length > 255 || email.length < 5 || password.length < 8) {
-        return res.status(400).json({
-            error: "Email and password can't be more than 255 charecters or email can't be shorter than 5 and password can't be shorter than 8 char"
-        });
-    }
+        let value = parse_value_from_option_user(key, data[key]);
 
-    if (data.email !== req.user.email) {
-        const status = await update_user(req.user.id, "email", data.email);
+        if(value === undefined) {
+            return res.status(400).json({
+                error: "Invalid value to update, wrong type or wrong input."
+            });
+        }
 
-        if (!status) {
+        const user = await update_user(req.user.id, key, value);
+
+        if(!user) {
             return res.status(500).json({
-                error: "Error updating email"
+                error: `Error on updating the value "${data[key]}" as "${value}" in option ${key}`
             });
         }
     }
 
-    const hashPassword = crypto.createHash('sha256').update(data.password).digest('hex');
-
-    if (data.password !== "" && hashPassword !== req.user.password) {
-        const status = await update_user(req.user.id, "password", hashPassword);
-
-        if (!status) {
-            return res.status(500).json({
-                error: "Error updating password"
-            });
-        }
-    }
-
-    const userId = parseInt(req.user.id);
+    const user_id = parseInt(req.user.id);
     
-    let keysToDelete = [];
+    let keys_to_delete = [];
 
     // Delete all tokens related to that user
     let cursor = 0;
@@ -71,8 +61,8 @@ app.post("/update", middleware_auth, async (req, res) => {
             const value = await redis_client.get(key);
 
             try {
-                if (parseInt(value) === userId) {
-                    keysToDelete.push(key);
+                if (parseInt(value) === user_id) {
+                    keys_to_delete.push(key);
                 }
             } catch (err) {
                 console.error(err);
@@ -80,20 +70,20 @@ app.post("/update", middleware_auth, async (req, res) => {
         }
     } while (cursor !== 0);
 
-    if(keysToDelete.length > 0) {
-        await redis_client.del(keysToDelete);
+    if(keys_to_delete.length > 0) {
+        await redis_client.del(keys_to_delete);
     }
 
-    const newUser = await get_user(req.user.id);
+    const new_user = await get_user(req.user.id);
 
-    if (!newUser) {
+    if (!new_user) {
         return res.status(500).json({
             error: "Error fetching new user"
         });
     }
 
     res.status(200).json({
-        data: newUser
+        data: new_user
     });
 });
 

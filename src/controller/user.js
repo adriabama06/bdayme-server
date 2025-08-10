@@ -113,3 +113,35 @@ export async function update_user(id, option, value) {
         return;
     }
 }
+
+/**
+ * @returns {boolean}
+ * @param {string} option
+ */
+export function is_valid_option_user(option) {
+    return ["email", "password"].includes(option);
+}
+
+/**
+ * @returns {any | undefined}
+ * @param {string} option
+ * @param {any} value
+ */
+export function parse_value_from_option_user(option, value) {
+    switch (option) {
+        case "email":
+            if(typeof value !== "string" || value.length < 5 || value.length > 255) return undefined;
+
+            return value;
+        
+        case "password":
+            if(typeof value !== "string" || value.length < 8 || value.length > 255) return undefined;
+
+            const hashPassword = crypto.createHash("sha256").update(value).digest("hex");
+
+            return hashPassword;
+
+        default:
+            return undefined;
+    }
+}

@@ -2,6 +2,8 @@ import { Router } from "express";
 import { create_profile, get_profile, update_profile } from "../controller/profile.js";
 import middleware_auth from "../middlewares/auth.js";
 
+const MAX_ABOUTME_LENGTH = 1024;
+
 const app = Router();
 
 app.get("/", middleware_auth, async (req, res) => {
@@ -71,13 +73,19 @@ app.post("/create", middleware_auth, async (req, res) => {
 app.post("/update/:option", middleware_auth, async (req, res) => {
     const { option } = req.params;
 
-    if(!["username", "birthday"].includes(option)) {
+    if(!["username", "birthday", "aboutme"].includes(option)) {
         return res.status(400).json({
             error: "Invalid option to update"
         });
     }
 
     let value = req.body[option]; // TODO: Use key, value for multiple patch in a single request
+
+    if(!value) {
+        return res.status(400).json({
+            error: "There is no value to update"
+        });
+    }
 
     if(option == "birthday") {
         const value_date = new Date(value);
@@ -89,6 +97,18 @@ app.post("/update/:option", middleware_auth, async (req, res) => {
         }
 
         value = value_date;
+    }
+
+    if(option === "aboutme") {
+        if(typeof value !== "string") {
+            return res.status(400).json({
+                error: "The input must be a string"
+            });
+        }
+
+        if(value.length >= MAX_ABOUTME_LENGTH) {
+            value = value.slice(0, MAX_ABOUTME_LENGTH);
+        }
     }
 
     const profile = await update_profile(req.user.id, option, value);

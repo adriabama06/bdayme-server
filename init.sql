@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS profiles (
   id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, -- User ID
   username VARCHAR(64) NOT NULL, -- User username
+  aboutme VARCHAR(1024) NOT NULL DEFAULT '', -- User shared information to other users
   birthday TIMESTAMP NOT NULL -- User birthday date
 );
 

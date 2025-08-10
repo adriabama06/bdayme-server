@@ -2,6 +2,7 @@
  * @typedef Profile
  * @prop {number} id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, -- User ID
  * @prop {string} username VARCHAR(255) NOT NULL, -- User username
+ * @prop {string} aboutme VARCHAR(1024) NOT NULL DEFAULT '', -- User shared information to other users
  * @prop {Date} birthday TIMESTAMP NOT NULL -- User birthday date
  */
 
@@ -37,7 +38,7 @@ export async function get_profile(id) {
 
 /**
  * @returns {Promise<Profile | undefined>}
- * @param {"id" | "username" | "created_at"} mode
+ * @param {"id" | "username" | "aboutme" | "created_at"} mode
  * @param {string} input
  */
 export async function get_profile_by(mode, input) {

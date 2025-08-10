@@ -15,8 +15,7 @@ Authorization: Bearer testtoken
 
 ###
 
-# http://127.0.0.1:6570/profile/update/option --> body = {"option": "value"}, example using username:
-POST http://127.0.0.1:6570/profile/update/username
+POST http://127.0.0.1:6570/profile/update
 Content-Type: application/json
 Authorization: Bearer testtoken
 

@@ -1,8 +1,6 @@
 import { Router } from "express";
-import { create_profile, get_profile, update_profile } from "../controller/profile.js";
+import { create_profile, get_profile, is_valid_option_profile, parse_value_from_option_profile, update_profile } from "../controller/profile.js";
 import middleware_auth from "../middlewares/auth.js";
-
-const MAX_ABOUTME_LENGTH = 1024;
 
 const app = Router();
 
@@ -51,9 +49,9 @@ app.post("/create", middleware_auth, async (req, res) => {
         });
     }
 
-    if(username.length <= 0) {
+    if(username.length <= 0 || username.length > 64) {
         return res.status(400).json({
-            error: "Username can't be a empty string"
+            error: "Username can't be a empty string or bigger than 64 charecters"
         });
     }
 
@@ -70,57 +68,43 @@ app.post("/create", middleware_auth, async (req, res) => {
     });
 });
 
-app.post("/update/:option", middleware_auth, async (req, res) => {
-    const { option } = req.params;
+app.post("/update", middleware_auth, async (req, res) => {
+    const data = req.body;
 
-    if(!["username", "birthday", "aboutme"].includes(option)) {
-        return res.status(400).json({
-            error: "Invalid option to update"
-        });
-    }
-
-    let value = req.body[option]; // TODO: Use key, value for multiple patch in a single request
-
-    if(!value) {
-        return res.status(400).json({
-            error: "There is no value to update"
-        });
-    }
-
-    if(option == "birthday") {
-        const value_date = new Date(value);
-
-        if(isNaN(value_date)) {
+    for (const key in data) {
+        if(!is_valid_option_profile(key)) {
             return res.status(400).json({
-                error: "Birthday is not a valid date, try using: `new Date(year, month, day).toISOString()`"
+                error: `Invalid option to update: ${key}`
             });
         }
 
-        value = value_date;
-    }
+        let value = parse_value_from_option_profile(key, data[key]);
 
-    if(option === "aboutme") {
-        if(typeof value !== "string") {
+        if(value === undefined) {
             return res.status(400).json({
-                error: "The input must be a string"
+                error: "Invalid value to update, wrong type or wrong input."
             });
         }
 
-        if(value.length >= MAX_ABOUTME_LENGTH) {
-            value = value.slice(0, MAX_ABOUTME_LENGTH);
+        const profile = await update_profile(req.user.id, key, value);
+
+        if(!profile) {
+            return res.status(500).json({
+                error: `Error on updating the value "${data[key]}" as "${value}" in option ${key}`
+            });
         }
     }
 
-    const profile = await update_profile(req.user.id, option, value);
+    const new_profile = await get_profile(req.user.id);
 
-    if(!profile) {
+    if(!new_profile) {
         return res.status(500).json({
-            error: `Error on updating the value "${req.body[option]}" in option ${option}`
+            error: `Unknown error trying to get your new profile`
         });
     }
 
     res.status(200).json({
-        data: profile
+        data: new_profile
     });
 });
 

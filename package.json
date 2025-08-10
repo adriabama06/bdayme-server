@@ -1,6 +1,6 @@
 {
   "name": "bdayme",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "bdayme app backend",
   "main": "src/index.js",
   "type": "module",

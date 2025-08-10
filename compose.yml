@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     # Wait for db and redis to start  
-    entrypoint: sh -c "sleep 5 && node ."
+    entrypoint: sh -c "sleep 10 && node ."
     # ports:
     #   - 6570:80
     healthcheck:

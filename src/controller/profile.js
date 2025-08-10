@@ -129,7 +129,7 @@ export function is_valid_option_profile(option) {
 export function parse_value_from_option_profile(option, value) {
     switch (option) {
         case "username":
-            if(typeof value != "string" || username.length <= 0 || username.length > 64) return undefined;
+            if(typeof value != "string" || value.length <= 0 || value.length > 64) return undefined;
 
             return value;
         

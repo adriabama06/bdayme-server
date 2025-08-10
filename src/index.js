@@ -22,7 +22,7 @@ app.use("/friends", friends_api);
 app.use("/code", code_api);
 
 app.use((req, res) => {
-    res.send("Hello World");
+    res.status(404).json({ error: "Oh, this page does not exist, what are you looking for?" });
 });
 
 app.listen(PORT, "0.0.0.0", () => {

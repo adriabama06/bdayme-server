@@ -9,6 +9,12 @@ const app = express();
 app.use(express.json());
 app.set('trust proxy', process.env.TRUST_PROXY?.split(",") ?? []); // https://expressjs.com/en/guide/behind-proxies.html
 
+app.get("/healthcheck", (req, res) => {
+    res.status(200).json({
+        data: "Server up!"
+    });
+});
+
 // Check client version
 app.use((req, res, next) => {
     const client_version = req.headers["client-version"];

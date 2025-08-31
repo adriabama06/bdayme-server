@@ -40,7 +40,7 @@ services:
     # ports:
     #   - "5432:5432"
     volumes:
-      # - postgre:/var/lib/postgresql/data
+      - postgre:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
   redis:

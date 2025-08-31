@@ -75,7 +75,7 @@ app.post("/login", async (req, res) => {
 
     const token = uuid_v4();
 
-    const status = await redis_client.set(`token:${token}`, user.id, { EX: 7 * 24 * 3600, NX: true });
+    const status = await redis_client.set(`token:${token}`, user.id, { EX: 90 * 24 * 3600, NX: true });
 
     if(!status) {
         return res.status(500).json({

@@ -31,7 +31,7 @@ export default async function middleware_auth(req, res, next) {
         });
     }
 
-    await redis_client.expire(`token:${token}`, 7 * 24 * 3600); // Reset token expire due to the usage
+    await redis_client.expire(`token:${token}`, 90 * 24 * 3600); // Reset token expire due to the usage
 
     req.user = user;
     req.token = token;

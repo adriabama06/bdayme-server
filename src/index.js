@@ -4,10 +4,12 @@ dotenv.config();
 const PORT = process.env.PORT ?? 80;
 
 import express from "express";
+import cors from "cors";
 
 const app = express();
 app.use(express.json());
 app.set('trust proxy', process.env.TRUST_PROXY?.split(",") ?? []); // https://expressjs.com/en/guide/behind-proxies.html
+app.use(cors());
 
 app.get("/healthcheck", (req, res) => {
     res.status(200).json({

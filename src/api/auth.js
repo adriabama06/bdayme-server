@@ -62,7 +62,7 @@ app.post("/login", async (req, res) => {
     const user = await get_user_by("email", email);
 
     if(!user) {
-        return res.status(400).json({
+        return res.status(404).json({
             error: "This user not exist"
         });
     }

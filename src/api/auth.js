@@ -87,7 +87,7 @@ app.post("/login", async (req, res) => {
 
     res.setHeaders(new Headers({ "Authorization": `Bearer ${token}` }));
     res.status(200).json({
-        data: user
+        data: { ...user, token }
     });
 });
 

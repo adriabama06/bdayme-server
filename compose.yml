@@ -43,6 +43,20 @@ services:
       - postgre:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  pgadmin:
+    restart: unless-stopped
+    image: dpage/pgadmin4:9.11
+    environment:
+      PGADMIN_DEFAULT_EMAIL: bdayme@mail.com
+      PGADMIN_DEFAULT_PASSWORD: bdaymepass
+      PGADMIN_LISTEN_PORT: 5050
+    ports:
+      - "5433:5050"
+    volumes:
+      - pgadmin:/data
+    depends_on:
+      - db
+
   redis:
     restart: unless-stopped
     image: redis:7.4.1-alpine3.20
@@ -68,6 +82,12 @@ volumes:
       type: none
       o: bind
       device: ./postgre
+  pgadmin:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./pgadmin
   redis-insight:
     driver: local
     driver_opts:

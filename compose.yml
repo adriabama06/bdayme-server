@@ -51,6 +51,16 @@ services:
     environment:
       - REDIS_REPLICATION_MODE=master
 
+  redis-insight:
+    restart: unless-stopped
+    image: redis/redisinsight:3.0
+    ports:
+      - "6380:5540"
+    volumes:
+      - redis-insight:/data
+    depends_on:
+      - redis
+
 volumes:
   postgre:
     driver: local
@@ -58,6 +68,12 @@ volumes:
       type: none
       o: bind
       device: ./postgre
+  redis-insight:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./redis-insight
 
 networks:
   default:

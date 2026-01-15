@@ -1,5 +1,6 @@
 # Custom
 postgres
+redis-insight
 
 # Logs
 logs

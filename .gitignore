@@ -2,6 +2,7 @@
 postgres
 pgadmin
 redis-insight
+postgre
 
 # Logs
 logs

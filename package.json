@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node .",
-    "dev": "nodemon ."
+    "dev": "nodemon .",
+    "test": "node --experimental-test-module-mocks --test \"test/**/*.test.mjs\"",
+    "test:e2e": "node test/e2e/friends-e2e.mjs"
   },
   "repository": {
     "type": "git",

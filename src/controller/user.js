@@ -1,7 +1,7 @@
 /**
  * @typedef User
  * @prop {number} id SERIAL PRIMARY KEY, -- User ID
- * @prop {string} email VARCHAR(255) NOT NULL UNIQUE, -- User email
+ * @prop {string} username VARCHAR(64) NOT NULL UNIQUE, -- User login username (different from the profile display name)
  * @prop {string} password TEXT NOT NULL, -- User encrypted password
  * @prop {Date} created_at TIMESTAMP DEFAULT NOW() -- User creation date
 */
@@ -40,7 +40,7 @@ export async function get_user(id) {
 
 /**
  * @returns {Promise<User | undefined>}
- * @param {"id" | "email" | "password" | "created_at"} mode
+ * @param {"id" | "username" | "password" | "created_at"} mode
  * @param {string} input
  */
 export async function get_user_by(mode, input) {
@@ -55,16 +55,16 @@ export async function get_user_by(mode, input) {
 
 /**
  * @returns {Promise<User | undefined>}
- * @param {string} email
+ * @param {string} username
  * @param {string} password
  */
-export async function create_user(email, password) {
-    if (typeof email != "string" || typeof password != "string") return;
+export async function create_user(username, password) {
+    if (typeof username != "string" || typeof password != "string") return;
 
-    if(email.length > 255 || password.length > 255 || email.length < 5 || password.length < 8) return;
+    if(username.length > 64 || password.length > 255 || username.length < 5 || password.length < 8) return;
 
     try {
-        const result = await pg_client.query("INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *", [email, crypto.createHash('sha256').update(password).digest('hex')]);
+        const result = await pg_client.query("INSERT INTO users (username, password) VALUES ($1, $2) RETURNING *", [username, crypto.createHash('sha256').update(password).digest('hex')]);
 
         if(result.rowCount == 0) return;
 
@@ -119,7 +119,7 @@ export async function update_user(id, option, value) {
  * @param {string} option
  */
 export function is_valid_option_user(option) {
-    return ["email", "password"].includes(option);
+    return ["username", "password"].includes(option);
 }
 
 /**
@@ -129,8 +129,8 @@ export function is_valid_option_user(option) {
  */
 export function parse_value_from_option_user(option, value) {
     switch (option) {
-        case "email":
-            if(typeof value !== "string" || value.length < 5 || value.length > 255) return undefined;
+        case "username":
+            if(typeof value !== "string" || value.length < 5 || value.length > 64) return undefined;
 
             return value;
         

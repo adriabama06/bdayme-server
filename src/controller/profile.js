@@ -1,7 +1,7 @@
 /**
  * @typedef Profile
  * @prop {number} id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, -- User ID
- * @prop {string} username VARCHAR(255) NOT NULL, -- User username
+ * @prop {string} display_name VARCHAR(255) NOT NULL, -- Public displayed name of the user (different from the login username)
  * @prop {string} aboutme VARCHAR(1024) NOT NULL DEFAULT '', -- User shared information to other users
  * @prop {Date} birthday TIMESTAMP NOT NULL -- User birthday date
  */
@@ -40,7 +40,7 @@ export async function get_profile(id) {
 
 /**
  * @returns {Promise<Profile | undefined>}
- * @param {"id" | "username" | "aboutme" | "created_at"} mode
+ * @param {"id" | "display_name" | "aboutme" | "created_at"} mode
  * @param {string} input
  */
 export async function get_profile_by(mode, input) {
@@ -56,16 +56,16 @@ export async function get_profile_by(mode, input) {
 /**
  * @returns {Promise<Profile | undefined>}
  * @param {number | string} id
- * @param {string} email
+ * @param {string} display_name
  * @param {Date} birthday
  */
-export async function create_profile(id, username, birthday) {
-    if (typeof id != "number" && typeof id != "string" || typeof username != "string" || !(birthday instanceof Date)) return;
+export async function create_profile(id, display_name, birthday) {
+    if (typeof id != "number" && typeof id != "string" || typeof display_name != "string" || !(birthday instanceof Date)) return;
 
-    if(username.length <= 0 || username.length > 64) return;
+    if(display_name.length <= 0 || display_name.length > 64) return;
 
     try {
-        const result = await pg_client.query("INSERT INTO profiles (id, username, birthday) VALUES ($1, $2, $3) RETURNING *", [id, username, birthday]);
+        const result = await pg_client.query("INSERT INTO profiles (id, display_name, birthday) VALUES ($1, $2, $3) RETURNING *", [id, display_name, birthday]);
 
         await redis_client.set(`profile:${id}`, JSON.stringify(result.rows[0]), { EX: 5 * 60, NX: true });
 
@@ -118,7 +118,7 @@ export async function update_profile(id, option, value) {
  * @param {string} option
  */
 export function is_valid_option_profile(option) {
-    return ["username", "birthday", "aboutme"].includes(option);
+    return ["display_name", "birthday", "aboutme"].includes(option);
 }
 
 /**
@@ -128,7 +128,7 @@ export function is_valid_option_profile(option) {
  */
 export function parse_value_from_option_profile(option, value) {
     switch (option) {
-        case "username":
+        case "display_name":
             if(typeof value != "string" || value.length <= 0 || value.length > 64) return undefined;
 
             return value;

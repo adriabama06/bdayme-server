@@ -11,7 +11,7 @@ POST http://127.0.0.1:6570/profile/create
 Content-Type: application/json
 Authorization: Bearer testtoken
 
-{"username": "devuser", "birthday": "1990-05-01 00:00:00"}
+{"display_name": "devuser", "birthday": "1990-05-01 00:00:00"}
 
 ###
 
@@ -19,4 +19,4 @@ POST http://127.0.0.1:6570/profile/update
 Content-Type: application/json
 Authorization: Bearer testtoken
 
-{"username": "dev user new name"}
+{"display_name": "dev user new name"}

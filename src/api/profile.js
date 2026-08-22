@@ -41,21 +41,21 @@ app.get("/:id", async (req, res) => {
 });
 
 app.post("/create", middleware_auth, async (req, res) => {
-    const { username, birthday } = req.body;
+    const { display_name, birthday } = req.body;
 
-    if(typeof username != "string" || typeof birthday != "string" || isNaN(new Date(birthday))) {
+    if(typeof display_name != "string" || typeof birthday != "string" || isNaN(new Date(birthday))) {
         return res.status(400).json({
-            error: "Body must be a JSON with { username: string, birthday: string }, for birthday use `new Date(year, month, day).toISOString()`"
+            error: "Body must be a JSON with { display_name: string, birthday: string }, for birthday use `new Date(year, month, day).toISOString()`"
         });
     }
 
-    if(username.length <= 0 || username.length > 64) {
+    if(display_name.length <= 0 || display_name.length > 64) {
         return res.status(400).json({
-            error: "Username can't be a empty string or bigger than 64 charecters"
+            error: "Display name can't be a empty string or bigger than 64 charecters"
         });
     }
 
-    const profile = await create_profile(req.user.id, username, new Date(birthday));
+    const profile = await create_profile(req.user.id, display_name, new Date(birthday));
 
     if(!profile) {
         return res.status(500).json({

@@ -9,27 +9,27 @@ import redis_client from "../redis.js";
 const app = Router();
 
 app.post("/register", async (req, res) => {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
-    if(typeof email != "string" || typeof password != "string") {
+    if(typeof username != "string" || typeof password != "string") {
         return res.status(400).json({
-            error: "Body must be a JSON with { email: string, password: string }"
+            error: "Body must be a JSON with { username: string, password: string }"
         });
     }
 
-    if(email.length > 255 || password.length > 255 || email.length < 5 || password.length < 8) {
+    if(username.length > 64 || password.length > 255 || username.length < 5 || password.length < 8) {
         return res.status(400).json({
-            error: "Email and password can't be more than 255 charecters or email can't be shorter than 5 and password can't be shorter than 8 char"
+            error: "Username and password can't be more than 255 charecters or username can't be shorter than 5 and password can't be shorter than 8 char"
         });
     }
 
-    if(await get_user_by("email", email) != undefined) {
+    if(await get_user_by("username", username) != undefined) {
         return res.status(400).json({
-            error: "Email already in use"
+            error: "Username already in use"
         });
     }
 
-    const user = await create_user(email, password);
+    const user = await create_user(username, password);
 
     if(!user) {
         return res.status(500).json({
@@ -45,21 +45,21 @@ app.post("/register", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
-    if(typeof email != "string" || typeof password != "string") {
+    if(typeof username != "string" || typeof password != "string") {
         return res.status(400).json({
-            error: "Body must be a JSON with { email: string, password: string }"
+            error: "Body must be a JSON with { username: string, password: string }"
         });
     }
 
-    if(email.length > 255 || password.length > 255 || email.length < 5 || password.length < 8) {
+    if(username.length > 64 || password.length > 255 || username.length < 5 || password.length < 8) {
         return res.status(400).json({
-            error: "Email and password can't be more than 255 charecters or email can't be shorter than 5 and password can't be shorter than 8 char"
+            error: "Username and password can't be more than 255 charecters or username can't be shorter than 5 and password can't be shorter than 8 char"
         });
     }
 
-    const user = await get_user_by("email", email);
+    const user = await get_user_by("username", username);
 
     if(!user) {
         return res.status(404).json({

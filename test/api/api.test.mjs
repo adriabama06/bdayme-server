@@ -186,9 +186,12 @@ test("full friends flow between two users", async () => {
     // Friend of a non-existent user is rejected (FK violation)
     assert.equal((await api("POST", "/friends/add/999999", { token: token_a })).status, 500);
 
-    // Invalid ids
+    // Invalid ids (non numeric, negative, zero)
     assert.equal((await api("POST", "/friends/add/abc", { token: token_a })).status, 400);
+    assert.equal((await api("POST", "/friends/add/-1", { token: token_a })).status, 400);
+    assert.equal((await api("POST", "/friends/add/0", { token: token_a })).status, 400);
     assert.equal((await api("GET", "/friends/has/xyz", { token: token_a })).status, 400);
+    assert.equal((await api("GET", "/friends/has/-5", { token: token_a })).status, 400);
     assert.equal((await api("POST", "/friends/remove/nope", { token: token_a })).status, 400);
 
     // Both see each other in their friends list

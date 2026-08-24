@@ -261,8 +261,12 @@ test("user update invalidates all tokens of that user", async () => {
     const password = "updatepassword";
 
     await api("POST", "/auth/register", { body: { username, password } });
-    const login = await api("POST", "/auth/login", { body: { username, password } });
-    const token = login.json.data.token;
+
+    // Create two sessions for the same user (two devices)
+    const login_1 = await api("POST", "/auth/login", { body: { username, password } });
+    const login_2 = await api("POST", "/auth/login", { body: { username, password } });
+    const token = login_1.json.data.token;
+    const user_id = login_1.json.data.id;
 
     const new_username = random_name("api_renamed");
     const updated = await api("POST", "/user/update", { token, body: { username: new_username } });
@@ -270,8 +274,15 @@ test("user update invalidates all tokens of that user", async () => {
     assert.equal(updated.status, 200);
     assert.equal(updated.json.data.username, new_username);
 
-    // All previous tokens were invalidated
+    // All previous tokens were invalidated, on every device
     assert.equal((await api("GET", "/user", { token })).status, 400);
+    assert.equal((await api("GET", "/user", { token: login_2.json.data.token })).status, 400);
+
+    // The inverse mapping keys were cleaned up too
+    assert.deepEqual(
+        Object.keys(fake_redis.dump()).filter(key => key.startsWith(`user:${user_id}:tokens:`)),
+        []
+    );
 
     // Login with the new username works
     const relogin = await api("POST", "/auth/login", { body: { username: new_username, password } });

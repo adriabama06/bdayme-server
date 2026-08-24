@@ -43,29 +43,25 @@ app.post("/update", middleware_auth, async (req, res) => {
     }
 
     const user_id = parseInt(req.user.id);
-    
+
     let keys_to_delete = [];
 
-    // Delete all tokens related to that user
+    // Invalidate every token of this user using the inverse mapping
+    // (user:{id}:tokens:{token}) instead of scanning all the tokens
     let cursor = 0;
     do {
         const reply = await redis_client.scan(cursor, {
-            MATCH: "token:*",
+            MATCH: `user:${user_id}:tokens:*`,
             COUNT: 100
         });
 
         cursor = parseInt(reply.cursor);
-        const keys = reply.keys;
 
-        for (const key of keys) {
-            const value = await redis_client.get(key);
+        for (const key of reply.keys) {
+            const token = key.slice(`user:${user_id}:tokens:`.length);
 
-            try {
-                if (parseInt(value) === user_id) {
-                    keys_to_delete.push(key);
-                }
-            } catch (err) {
-                console.error(err);
+            if(token.length > 0) {
+                keys_to_delete.push(key, `token:${token}`);
             }
         }
     } while (cursor !== 0);

@@ -91,6 +91,10 @@ app.post("/login", login_limiter, async (req, res) => {
         });
     }
 
+    // Inverse mapping so all the tokens of a user can be invalidated
+    // efficiently without scanning every token in the system
+    await redis_client.set(`user:${user.id}:tokens:${token}`, "1", { EX: 90 * 24 * 3600 });
+
     delete user.password;
 
     res.setHeaders(new Headers({ "Authorization": `Bearer ${token}` }));
@@ -102,7 +106,7 @@ app.post("/login", login_limiter, async (req, res) => {
 app.post("/logout", middleware_auth, async (req, res) => {
     const token = req.token;
 
-    const status = await redis_client.del(`token:${token}`);
+    const status = await redis_client.del([`token:${token}`, `user:${req.user.id}:tokens:${token}`]);
 
     if(status < 1) {
         return res.status(500).json({

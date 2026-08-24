@@ -61,15 +61,11 @@ app.post("/login", async (req, res) => {
 
     const user = await get_user_by("username", username);
 
-    if(!user) {
-        return res.status(404).json({
-            error: "This user not exist"
-        });
-    }
-
-    if(user.password != crypto.createHash('sha256').update(password).digest('hex')) {
+    // Same response whether the user does not exist or the password is wrong
+    // to prevent user enumeration
+    if(!user || user.password != crypto.createHash('sha256').update(password).digest('hex')) {
         return res.status(400).json({
-            error: "Incorrect password"
+            error: "Invalid username or password"
         });
     }
 

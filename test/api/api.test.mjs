@@ -109,11 +109,14 @@ test("auth: login validates credentials and returns a token", async () => {
     const password = "loginpassword";
     await api("POST", "/auth/register", { body: { username, password } });
 
+    // Same generic error for unknown user and wrong password (no user enumeration)
     let res = await api("POST", "/auth/login", { body: { username: "no_such_user_here", password } });
-    assert.equal(res.status, 404);
+    assert.equal(res.status, 400);
+    assert.match(res.json.error, /invalid username or password/i);
 
     res = await api("POST", "/auth/login", { body: { username, password: "wrongpassword" } });
     assert.equal(res.status, 400);
+    assert.match(res.json.error, /invalid username or password/i);
 
     res = await api("POST", "/auth/login", { body: { username, password } });
     assert.equal(res.status, 200);

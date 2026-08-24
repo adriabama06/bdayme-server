@@ -18,6 +18,7 @@ const auth_api = (await import("../../src/api/auth.js")).default;
 const user_api = (await import("../../src/api/user.js")).default;
 const profile_api = (await import("../../src/api/profile.js")).default;
 const friends_api = (await import("../../src/api/friends.js")).default;
+const code_api = (await import("../../src/api/code.js")).default;
 
 const express = (await import("express")).default;
 
@@ -30,6 +31,7 @@ before(async () => {
     app.use("/user", user_api);
     app.use("/profile", profile_api);
     app.use("/friends", friends_api);
+    app.use("/code", code_api);
 
     server = app.listen(0);
     base_url = `http://127.0.0.1:${server.address().port}`;
@@ -243,6 +245,43 @@ test("full friends flow between two users", async () => {
 
     assert.equal((await api("GET", `/friends/has/${id_b}`, { token: token_a })).json.data, false);
     assert.deepEqual(await api("GET", "/friends", { token: token_a }).then(r => r.json.data), []);
+});
+
+test("code accept validates the code format and adds friends", async () => {
+    const username_a = random_name("code_a");
+    const username_b = random_name("code_b");
+
+    await api("POST", "/auth/register", { body: { username: username_a, password: "password_aaa" } });
+    await api("POST", "/auth/register", { body: { username: username_b, password: "password_bbb" } });
+
+    const login_a = await api("POST", "/auth/login", { body: { username: username_a, password: "password_aaa" } });
+    const login_b = await api("POST", "/auth/login", { body: { username: username_b, password: "password_bbb" } });
+
+    const token_a = login_a.json.data.token;
+    const token_b = login_b.json.data.token;
+
+    // Malformed codes are rejected before touching Redis
+    assert.equal((await api("GET", "/code/accept/not-a-uuid", { token: token_b })).status, 400);
+    assert.equal((await api("GET", `/code/accept/${"a".repeat(500)}`, { token: token_b })).status, 400);
+    assert.equal((await api("GET", "/code/accept/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa", { token: token_b })).status, 400); // 35 chars
+
+    // Well shaped but unknown code -> still invalid
+    assert.equal((await api("GET", "/code/accept/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", { token: token_b })).status, 400);
+
+    // Full flow
+    const created = await api("POST", "/code/create", { token: token_a });
+    assert.equal(created.status, 200);
+    assert.match(created.json.data.code, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+    assert.equal(created.json.data.direct_url, undefined);
+
+    const accepted = await api("GET", `/code/accept/${created.json.data.code}`, { token: token_b });
+    assert.equal(accepted.status, 204);
+
+    // Codes are single use
+    assert.equal((await api("GET", `/code/accept/${created.json.data.code}`, { token: token_b })).status, 400);
+
+    // They are friends now
+    assert.equal((await api("GET", "/friends", { token: token_b })).json.data.length, 1);
 });
 
 test("logout invalidates the session", async () => {

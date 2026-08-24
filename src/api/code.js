@@ -8,6 +8,10 @@ import redis_client from "../redis.js";
 
 const app = Router();
 
+// Codes are UUID v4 generated internally, reject anything else before
+// hitting Redis (length/format validation)
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 app.post("/create", middleware_auth, async (req, res) => {
     const code = uuid_v4();
 
@@ -27,6 +31,12 @@ app.post("/create", middleware_auth, async (req, res) => {
 
 app.get("/accept/:code", middleware_auth, async (req, res) => {
     const { code } = req.params;
+
+    if(!UUID_REGEX.test(code)) {
+        return res.status(400).json({
+            error: "Invalid code"
+        });
+    }
 
     try {
         const id = await redis_client.get(`code:${code}`);

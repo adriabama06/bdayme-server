@@ -5,9 +5,11 @@ const PORT = process.env.PORT ?? 80;
 
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 
 const app = express();
 app.use(express.json());
+app.use(helmet()); // Secure HTTP headers (CSP, nosniff, X-Frame-Options, HSTS, Referrer-Policy...)
 app.set('trust proxy', process.env.TRUST_PROXY?.split(",") ?? []); // https://expressjs.com/en/guide/behind-proxies.html
 
 // Only allow the origins listed in CORS_ORIGIN (comma separated), block everyone else

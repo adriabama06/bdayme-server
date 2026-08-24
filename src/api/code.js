@@ -19,13 +19,9 @@ app.post("/create", middleware_auth, async (req, res) => {
         });
     }
 
-    const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
-
+    // Only the code is returned, the client builds the accept URL itself
     res.status(200).json({
-        data: {
-            code,
-            direct_url: `${url.origin}/code/accept/${code}`
-        }
+        data: { code }
     });
 });
 

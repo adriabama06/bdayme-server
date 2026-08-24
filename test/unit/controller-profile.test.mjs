@@ -74,6 +74,14 @@ test("get_profile returns undefined when not found or on invalid input/error", a
     assert.equal(await profile_controller.get_profile(999), undefined);
 });
 
+test("get_profile_by rejects modes outside the allowlist without querying", async () => {
+    fake_pg.reset(async () => ({ rows: [{ id: 5 }], rowCount: 1 }));
+
+    assert.equal(await profile_controller.get_profile_by("1 = 1 OR display_name", "x"), undefined);
+    assert.equal(await profile_controller.get_profile_by("unknown_column", "x"), undefined);
+    assert.equal(fake_pg.calls.length, 0);
+});
+
 test("update_profile updates the column and refreshes the cache", async () => {
     const row = { id: 8, display_name: "NewName", aboutme: "", birthday: new Date() };
 
@@ -89,6 +97,14 @@ test("update_profile updates the column and refreshes the cache", async () => {
 
     assert.equal(await profile_controller.update_profile(8, {}, "value"), undefined);
     assert.equal(await profile_controller.update_profile(8, "display_name", ""), undefined); // falsy value
+});
+
+test("update_profile rejects options outside the allowlist without querying", async () => {
+    fake_pg.reset(async () => ({ rows: [{ id: 8 }], rowCount: 1 }));
+
+    assert.equal(await profile_controller.update_profile(8, "id = 1; DROP TABLE profiles; --", "x"), undefined);
+    assert.equal(await profile_controller.update_profile(8, "created_at", "x"), undefined);
+    assert.equal(fake_pg.calls.length, 0);
 });
 
 test("delete_profile removes the row and cache entry", async () => {

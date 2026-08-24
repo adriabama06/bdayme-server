@@ -11,6 +11,10 @@ export const MAX_ABOUTME_LENGTH = 1024;
 import pg_client from "../database.js";
 import redis_client from "../redis.js";
 
+// Never build SQL with columns outside of these lists (SQL injection protection)
+const PROFILE_SELECTABLE_COLUMNS = ["id", "display_name", "aboutme", "created_at"];
+const PROFILE_UPDATABLE_COLUMNS = ["display_name", "birthday", "aboutme"];
+
 /**
  * @returns {Promise<Profile | undefined>}
  * @param {number | string} id
@@ -44,6 +48,8 @@ export async function get_profile(id) {
  * @param {string} input
  */
 export async function get_profile_by(mode, input) {
+    if (!PROFILE_SELECTABLE_COLUMNS.includes(mode)) return;
+
     try {
         const result = await pg_client.query(`SELECT * FROM profiles WHERE ${mode} = $1`, [input]);
 
@@ -101,6 +107,7 @@ export async function delete_profile(id) {
  */
 export async function update_profile(id, option, value) {
     if (typeof id != "number" && typeof id != "string" || typeof option != "string" || !value) return;
+    if (!PROFILE_UPDATABLE_COLUMNS.includes(option)) return;
 
     try {
         const result = await pg_client.query(`UPDATE profiles SET ${option} = $2 WHERE id = $1 RETURNING *`, [id, value]);

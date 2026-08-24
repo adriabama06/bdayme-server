@@ -11,6 +11,10 @@ import crypto from "crypto";
 import pg_client from "../database.js";
 import redis_client from "../redis.js";
 
+// Never build SQL with columns outside of these lists (SQL injection protection)
+const USER_SELECTABLE_COLUMNS = ["id", "username", "password", "created_at"];
+const USER_UPDATABLE_COLUMNS = ["username", "password"];
+
 /**
  * @returns {Promise<User | undefined>}
  * @param {number | string} id
@@ -44,6 +48,8 @@ export async function get_user(id) {
  * @param {string} input
  */
 export async function get_user_by(mode, input) {
+    if (!USER_SELECTABLE_COLUMNS.includes(mode)) return;
+
     try {
         const result = await pg_client.query(`SELECT * FROM users WHERE ${mode} = $1`, [input]);
 
@@ -102,6 +108,7 @@ export async function delete_user(id) {
  */
 export async function update_user(id, option, value) {
     if (typeof id != "number" && typeof id != "string" || typeof option != "string" || !value) return;
+    if (!USER_UPDATABLE_COLUMNS.includes(option)) return;
 
     try {
         const result = await pg_client.query(`UPDATE users SET ${option} = $2 WHERE id = $1 RETURNING *`, [id, value]);

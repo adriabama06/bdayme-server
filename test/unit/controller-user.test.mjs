@@ -95,6 +95,14 @@ test("get_user_by returns the first matching row or undefined on error", async (
     assert.equal(await user_controller.get_user_by("username", "someone"), undefined);
 });
 
+test("get_user_by rejects modes outside the allowlist without querying", async () => {
+    fake_pg.reset(async () => ({ rows: [{ id: 5 }], rowCount: 1 }));
+
+    assert.equal(await user_controller.get_user_by("1 = 1 OR username", "x"), undefined);
+    assert.equal(await user_controller.get_user_by("unknown_column", "x"), undefined);
+    assert.equal(fake_pg.calls.length, 0);
+});
+
 test("update_user updates the column and refreshes the cache", async () => {
     const updated_row = { id: 2, username: "updatedname", password: "hash" };
 
@@ -108,6 +116,14 @@ test("update_user updates the column and refreshes the cache", async () => {
     assert.equal(await user_controller.update_user({}, "username", "x"), undefined);
     assert.equal(await user_controller.update_user(2, 5, "x"), undefined);
     assert.equal(await user_controller.update_user(2, "username", ""), undefined);
+});
+
+test("update_user rejects options outside the allowlist without querying", async () => {
+    fake_pg.reset(async () => ({ rows: [{ id: 2 }], rowCount: 1 }));
+
+    assert.equal(await user_controller.update_user(2, "id = 1; DROP TABLE users; --", "x"), undefined);
+    assert.equal(await user_controller.update_user(2, "created_at", "x"), undefined);
+    assert.equal(fake_pg.calls.length, 0);
 });
 
 test("delete_user removes the row and its cache entry", async () => {

@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { create_profile, get_profile, is_valid_option_profile, parse_value_from_option_profile, update_profile } from "../controller/profile.js";
 import middleware_auth from "../middlewares/auth.js";
-import middleware_valid_id from "../middlewares/valid_id.js";
 
 const app = Router();
 
@@ -19,8 +18,16 @@ app.get("/", middleware_auth, async (req, res) => {
     });
 });
 
-app.get("/:id", middleware_auth, middleware_valid_id, async (req, res) => {
-    const profile = await get_profile(req.validated_id);
+app.get("/:id", middleware_auth, async (req, res) => {
+    const id = Number(req.params.id);
+
+    if(!Number.isSafeInteger(id) || id <= 0) {
+        return res.status(400).json({
+            error: "Id must be a int"
+        });
+    }
+
+    const profile = await get_profile(id);
 
     if(!profile) {
         return res.status(404).json({

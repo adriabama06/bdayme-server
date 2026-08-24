@@ -9,7 +9,23 @@ import cors from "cors";
 const app = express();
 app.use(express.json());
 app.set('trust proxy', process.env.TRUST_PROXY?.split(",") ?? []); // https://expressjs.com/en/guide/behind-proxies.html
-app.use(cors());
+
+// Only allow the origins listed in CORS_ORIGIN (comma separated), block everyone else
+const cors_origins = process.env.CORS_ORIGIN?.split(",").map(origin => origin.trim()).filter(origin => origin.length > 0) ?? [];
+
+if(cors_origins.length === 0) {
+    console.warn("[CORS] CORS_ORIGIN is not set, all browser origins will be blocked");
+}
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Requests without Origin (curl, mobile apps, same-origin) are allowed,
+        // browsers always send it on cross-origin requests
+        if(!origin || cors_origins.includes(origin)) return callback(null, true);
+
+        return callback(null, false);
+    }
+}));
 
 app.get("/healthcheck", (req, res) => {
     res.status(200).json({

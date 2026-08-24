@@ -4,11 +4,23 @@ import crypto from "crypto";
 
 import { create_user, get_user_by } from "../controller/user.js";
 import middleware_auth from "../middlewares/auth.js";
+import rate_limit from "../middlewares/rate_limit.js";
 import redis_client from "../redis.js";
 
 const app = Router();
 
-app.post("/register", async (req, res) => {
+// Brute force / abuse protection, limits configurable from env
+const register_limiter = rate_limit({
+    window_ms: 60 * 60 * 1000,
+    max: parseInt(process.env.REGISTER_RATE_LIMIT_MAX) || 10
+});
+
+const login_limiter = rate_limit({
+    window_ms: 15 * 60 * 1000,
+    max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX) || 5
+});
+
+app.post("/register", register_limiter, async (req, res) => {
     const { username, password } = req.body;
 
     if(typeof username != "string" || typeof password != "string") {
@@ -44,7 +56,7 @@ app.post("/register", async (req, res) => {
     });
 });
 
-app.post("/login", async (req, res) => {
+app.post("/login", login_limiter, async (req, res) => {
     const { username, password } = req.body;
 
     if(typeof username != "string" || typeof password != "string") {

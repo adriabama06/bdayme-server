@@ -6,6 +6,10 @@ import { create_fake_redis, create_emulated_db } from "../helpers/fakes.mjs";
 const db = create_emulated_db();
 const fake_redis = create_fake_redis();
 
+// Raise the rate limits so the API tests don't hit the auth rate limiters
+process.env.REGISTER_RATE_LIMIT_MAX ??= "100000";
+process.env.LOGIN_RATE_LIMIT_MAX ??= "100000";
+
 mock.module("../../src/database.js", { defaultExport: { query: db.query, connect: async () => {}, on: () => {} } });
 mock.module("../../src/redis.js", { defaultExport: fake_redis.client });
 

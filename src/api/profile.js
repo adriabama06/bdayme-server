@@ -18,7 +18,7 @@ app.get("/", middleware_auth, async (req, res) => {
     });
 });
 
-app.get("/:id", async (req, res) => {
+app.get("/:id", middleware_auth, async (req, res) => {
     if(isNaN(parseInt(req.params.id))) {
         return res.status(400).json({
             error: "Id must be a int"

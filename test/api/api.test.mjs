@@ -220,9 +220,13 @@ test("full friends flow between two users", async () => {
     // Own profile endpoint
     assert.equal((await api("GET", "/profile", { token: token_a })).json.data.display_name, "User A");
 
-    // Profile endpoints validate ids
+    // Profile endpoints require authentication (no public enumeration of ids)
     assert.equal((await api("GET", "/profile/notanumber")).status, 400);
-    assert.equal((await api("GET", "/profile/999999")).status, 404);
+    assert.equal((await api("GET", "/profile/999999")).status, 400);
+
+    // Profile endpoints validate ids
+    assert.equal((await api("GET", "/profile/notanumber", { token: token_a })).status, 400);
+    assert.equal((await api("GET", "/profile/999999", { token: token_a })).status, 404);
 
     // Profile update
     const updated = await api("POST", "/profile/update", { token: token_a, body: { aboutme: "hello there" } });

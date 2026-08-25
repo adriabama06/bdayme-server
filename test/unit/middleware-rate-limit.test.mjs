@@ -99,6 +99,42 @@ test("rate_limit resets the bucket after the window expires", async () => {
     assert.equal(next_calls, 2);
 });
 
+test("rate_limit keys on the forwarded IP appended by the proxy", async () => {
+    const middleware = rate_limit({ prefix: "test-forwarded", window_ms: 60_000, max: 1 });
+
+    let next_calls = 0;
+
+    // The proxy appends the real client IP after any spoofed entries,
+    // so the last X-Forwarded-For entry wins
+    await middleware(
+        { ip: "10.0.0.2", headers: { "x-forwarded-for": "9.9.9.9, 6.6.6.6" } },
+        create_fake_res().res,
+        () => next_calls++
+    );
+    assert.equal(next_calls, 1);
+
+    const blocked = create_fake_res();
+    await middleware(
+        { ip: "10.0.0.2", headers: { "x-forwarded-for": "9.9.9.9, spoofed.example" } },
+        blocked.res,
+        () => next_calls++
+    );
+    assert.equal(blocked.state.status_code, 429);
+});
+
+test("rate_limit falls back to req.ip without a forwarded header", async () => {
+    const middleware = rate_limit({ prefix: "test-fallback", window_ms: 60_000, max: 1 });
+
+    let next_calls = 0;
+
+    await middleware({ ip: "4.4.4.4" }, create_fake_res().res, () => next_calls++);
+    assert.equal(next_calls, 1);
+
+    const blocked = create_fake_res();
+    await middleware({ ip: "4.4.4.4" }, blocked.res, () => next_calls++);
+    assert.equal(blocked.state.status_code, 429);
+});
+
 test("rate_limit stores counters under a per-prefix key with expiry", async () => {
     const register = rate_limit({ prefix: "register", window_ms: 3_600_000, max: 100 });
     const login = rate_limit({ prefix: "login", window_ms: 900_000, max: 5 });

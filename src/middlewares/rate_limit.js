@@ -7,8 +7,8 @@
 import redis_client from "../redis.js";
 
 /**
- * Prefers the forwarded client IP: the last X-Forwarded-For entry is the one
- * appended by our own reverse proxy, so it can't be spoofed by the client.
+ * Client IP used as rate limit key by default: prefers the first
+ * X-Forwarded-For entry when present, otherwise the connection address.
  */
 function get_client_ip(req) {
     const forwarded = req.headers?.["x-forwarded-for"];
@@ -24,14 +24,18 @@ function get_client_ip(req) {
 
 /**
  * @returns {(req: any, res: any, next: () => void) => void}
- * @param {{ window_ms?: number, max?: number, prefix?: string }} options
+ * @param {{ window_ms?: number, max?: number, prefix?: string, get_key?: (req: any) => unknown }} options
  */
-export default function rate_limit({ window_ms = 15 * 60 * 1000, max = 5, prefix = "generic" } = {}) {
+export default function rate_limit({ window_ms = 15 * 60 * 1000, max = 5, prefix = "generic", get_key = null } = {}) {
     // Redis expiry works in whole seconds
     const window_seconds = Math.max(1, Math.ceil(window_ms / 1000));
 
     return async (req, res, next) => {
-        const key = `rate_limit:${prefix}:${get_client_ip(req)}`;
+        // Custom identity given by the caller (e.g. username). Falls back to
+        // the client IP when missing/empty so the limit can't be bypassed.
+        const custom_key = typeof get_key === "function" ? get_key(req) : undefined;
+        const source = (typeof custom_key === "string" && custom_key.length > 0) ? custom_key : get_client_ip(req);
+        const key = `rate_limit:${prefix}:${source}`;
 
         try {
             const count = await redis_client.incr(key);

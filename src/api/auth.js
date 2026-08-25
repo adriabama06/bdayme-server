@@ -19,7 +19,10 @@ const register_limiter = rate_limit({
 const login_limiter = rate_limit({
     prefix: "login",
     window_ms: 15 * 60 * 1000,
-    max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX) || 5
+    max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX) || 7,
+    // Limit per account instead of per IP, an attacker can rotate IPs to
+    // brute force a single user
+    get_key: req => req.body?.username
 });
 
 app.post("/register", register_limiter, async (req, res) => {

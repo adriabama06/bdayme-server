@@ -135,6 +135,30 @@ test("rate_limit falls back to req.ip without a forwarded header", async () => {
     assert.equal(blocked.state.status_code, 429);
 });
 
+test("rate_limit supports caller-provided keys (per-user limiting)", async () => {
+    const middleware = rate_limit({ prefix: "test-user", window_ms: 60_000, max: 1, get_key: req => req.body?.username });
+
+    let next_calls = 0;
+
+    // The same user shares one bucket even from different IPs
+    await middleware({ ip: "1.1.1.1", body: { username: "victim" } }, create_fake_res().res, () => next_calls++);
+    assert.equal(next_calls, 1);
+
+    const from_other_ip = create_fake_res();
+    await middleware({ ip: "2.2.2.2", body: { username: "victim" } }, from_other_ip.res, () => next_calls++);
+    assert.equal(from_other_ip.state.status_code, 429);
+
+    // Other users keep their own bucket
+    const other_user = create_fake_res();
+    await middleware({ ip: "2.2.2.2", body: { username: "someoneelse" } }, other_user.res, () => next_calls++);
+    assert.equal(next_calls, 2);
+
+    // Missing key falls back to the client IP so it can't bypass the limit
+    const no_key = create_fake_res();
+    await middleware({ ip: "2.2.2.2", body: {} }, no_key.res, () => next_calls++);
+    assert.equal(next_calls, 3);
+});
+
 test("rate_limit stores counters under a per-prefix key with expiry", async () => {
     const register = rate_limit({ prefix: "register", window_ms: 3_600_000, max: 100 });
     const login = rate_limit({ prefix: "login", window_ms: 900_000, max: 5 });

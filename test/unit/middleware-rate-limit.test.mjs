@@ -1,7 +1,15 @@
-import { test } from "node:test";
+import { test, mock } from "node:test";
 import assert from "node:assert/strict";
 
-import rate_limit from "../../src/middlewares/rate_limit.js";
+import { create_fake_redis } from "../helpers/fakes.mjs";
+
+let fake_time = Date.now();
+const fake_redis = create_fake_redis({ now_ms: () => fake_time });
+
+mock.module("../../src/redis.js", { defaultExport: fake_redis.client });
+
+// Import AFTER mocking redis
+const rate_limit = (await import("../../src/middlewares/rate_limit.js")).default;
 
 function create_fake_req(ip) {
     return { ip };
@@ -24,8 +32,8 @@ function create_fake_res() {
     return { res, state };
 }
 
-test("rate_limit allows up to max requests and then blocks with 429", () => {
-    const middleware = rate_limit({ window_ms: 60_000, max: 3 });
+test("rate_limit allows up to max requests and then blocks with 429", async () => {
+    const middleware = rate_limit({ prefix: "test-max", window_ms: 60_000, max: 3 });
 
     let next_calls = 0;
     const next = () => next_calls++;
@@ -33,14 +41,14 @@ test("rate_limit allows up to max requests and then blocks with 429", () => {
     // First 3 requests pass through
     for(let i = 0; i < 3; i++) {
         const { res } = create_fake_res();
-        middleware(create_fake_req("1.2.3.4"), res, next);
+        await middleware(create_fake_req("1.2.3.4"), res, next);
 
         assert.equal(next_calls, i + 1);
     }
 
     // 4th request is blocked
     const { res, state } = create_fake_res();
-    middleware(create_fake_req("1.2.3.4"), res, next);
+    await middleware(create_fake_req("1.2.3.4"), res, next);
 
     assert.equal(next_calls, 3); // no extra next()
     assert.equal(state.status_code, 429);
@@ -48,44 +56,62 @@ test("rate_limit allows up to max requests and then blocks with 429", () => {
     assert.match(state.json_body.error, /too many requests/i);
 });
 
-test("rate_limit tracks clients independently", () => {
-    const middleware = rate_limit({ window_ms: 60_000, max: 1 });
+test("rate_limit tracks clients independently", async () => {
+    const middleware = rate_limit({ prefix: "test-clients", window_ms: 60_000, max: 1 });
 
     let next_calls = 0;
 
     // Each client's first request passes
-    middleware(create_fake_req("5.6.7.8"), create_fake_res().res, () => next_calls++);
-    middleware(create_fake_req("9.10.11.12"), create_fake_res().res, () => next_calls++);
+    await middleware(create_fake_req("5.6.7.8"), create_fake_res().res, () => next_calls++);
+    await middleware(create_fake_req("9.10.11.12"), create_fake_res().res, () => next_calls++);
 
     assert.equal(next_calls, 2);
 
     // Both are now limited
     const first = create_fake_res();
-    middleware(create_fake_req("5.6.7.8"), first.res, () => next_calls++);
+    await middleware(create_fake_req("5.6.7.8"), first.res, () => next_calls++);
     assert.equal(first.state.status_code, 429);
     assert.equal(next_calls, 2);
 
     const second = create_fake_res();
-    middleware(create_fake_req("9.10.11.12"), second.res, () => next_calls++);
+    await middleware(create_fake_req("9.10.11.12"), second.res, () => next_calls++);
     assert.equal(second.state.status_code, 429);
     assert.equal(next_calls, 2);
 });
 
 test("rate_limit resets the bucket after the window expires", async () => {
-    const middleware = rate_limit({ window_ms: 20, max: 1 });
+    const middleware = rate_limit({ prefix: "test-window", window_ms: 20, max: 1 });
 
     let next_calls = 0;
 
-    middleware(create_fake_req("7.7.7.7"), create_fake_res().res, () => next_calls++);
+    await middleware(create_fake_req("7.7.7.7"), create_fake_res().res, () => next_calls++);
     assert.equal(next_calls, 1);
 
     const blocked = create_fake_res();
-    middleware(create_fake_req("7.7.7.7"), blocked.res, () => next_calls++);
+    await middleware(create_fake_req("7.7.7.7"), blocked.res, () => next_calls++);
     assert.equal(blocked.state.status_code, 429);
     assert.equal(next_calls, 1);
 
-    await new Promise(resolve => setTimeout(resolve, 30));
+    // Advance past the window (redis expiry is whole seconds)
+    fake_time += 2000;
 
-    middleware(create_fake_req("7.7.7.7"), create_fake_res().res, () => next_calls++);
+    await middleware(create_fake_req("7.7.7.7"), create_fake_res().res, () => next_calls++);
     assert.equal(next_calls, 2);
+});
+
+test("rate_limit stores counters under a per-prefix key with expiry", async () => {
+    const register = rate_limit({ prefix: "register", window_ms: 3_600_000, max: 100 });
+    const login = rate_limit({ prefix: "login", window_ms: 900_000, max: 5 });
+    const req = create_fake_req("8.8.8.8");
+
+    await register(req, create_fake_res().res, () => {});
+    await login(req, create_fake_res().res, () => {});
+
+    // Each limiter has its own bucket for the same IP
+    assert.equal(await fake_redis.client.get("rate_limit:register:8.8.8.8"), "1");
+    assert.equal(await fake_redis.client.get("rate_limit:login:8.8.8.8"), "1");
+
+    // Buckets expire after their window
+    assert.ok(await fake_redis.client.ttl("rate_limit:register:8.8.8.8") <= 3600);
+    assert.ok(await fake_redis.client.ttl("rate_limit:login:8.8.8.8") <= 900);
 });

@@ -11,11 +11,13 @@ const app = Router();
 
 // Brute force / abuse protection, limits configurable from env
 const register_limiter = rate_limit({
+    prefix: "register",
     window_ms: 60 * 60 * 1000,
     max: parseInt(process.env.REGISTER_RATE_LIMIT_MAX) || 10
 });
 
 const login_limiter = rate_limit({
+    prefix: "login",
     window_ms: 15 * 60 * 1000,
     max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX) || 5
 });

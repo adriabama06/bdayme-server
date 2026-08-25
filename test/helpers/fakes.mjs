@@ -33,8 +33,23 @@ export function create_fake_pg() {
     };
 }
 
-export function create_fake_redis() {
-    const store = new Map();
+export function create_fake_redis({ now_ms = () => Date.now() } = {}) {
+    const store = new Map(); // key -> { value, expires_at }
+
+    function is_expired(entry) {
+        return entry.expires_at !== null && entry.expires_at <= now_ms();
+    }
+
+    function get_entry(key) {
+        const entry = store.get(key);
+
+        if(entry && is_expired(entry)) {
+            store.delete(key);
+            return undefined;
+        }
+
+        return entry;
+    }
 
     function match_pattern(pattern, key) {
         if(!pattern.includes("*")) return pattern === key;
@@ -49,15 +64,32 @@ export function create_fake_redis() {
         on: () => {},
 
         async get(key) {
-            return store.has(key) ? store.get(key) : null;
+            const entry = get_entry(key);
+            return entry ? entry.value : null;
         },
 
         async set(key, value, options = {}) {
-            if(options.NX && store.has(key)) return null;
+            if(options.NX && get_entry(key)) return null;
 
-            store.set(key, typeof value === "string" ? value : String(value));
+            store.set(key, {
+                value: typeof value === "string" ? value : String(value),
+                expires_at: options.EX ? now_ms() + options.EX * 1000 : null
+            });
 
             return "OK";
+        },
+
+        async incr(key) {
+            let entry = get_entry(key);
+
+            if(!entry) {
+                entry = { value: "0", expires_at: null };
+                store.set(key, entry);
+            }
+
+            entry.value = String(Number(entry.value) + 1);
+
+            return Number(entry.value);
         },
 
         async del(key_or_keys) {
@@ -71,13 +103,25 @@ export function create_fake_redis() {
             return deleted;
         },
 
-        async expire(key, _seconds) {
-            return store.has(key) ? 1 : 0;
+        async expire(key, seconds) {
+            const entry = get_entry(key);
+            if(!entry) return 0;
+
+            entry.expires_at = now_ms() + seconds * 1000;
+            return 1;
+        },
+
+        async ttl(key) {
+            const entry = get_entry(key);
+            if(!entry) return -2;
+            if(entry.expires_at === null) return -1;
+
+            return Math.ceil((entry.expires_at - now_ms()) / 1000);
         },
 
         async scan(cursor, options = {}) {
             const pattern = options.MATCH ?? "*";
-            const keys = [...store.keys()].filter(key => match_pattern(pattern, key));
+            const keys = [...store.keys()].filter(key => get_entry(key)).filter(key => match_pattern(pattern, key));
 
             return { cursor: "0", keys };
         }
@@ -85,9 +129,10 @@ export function create_fake_redis() {
 
     return {
         client,
-        has: key => store.has(key),
-        dump: () => Object.fromEntries(store),
-        clear: () => store.clear()
+        has: key => Boolean(get_entry(key)),
+        dump: () => Object.fromEntries([...store.entries()].filter(([key]) => get_entry(key)).map(([key, entry]) => [key, entry.value])),
+        clear: () => store.clear(),
+        now_ms
     };
 }
 

@@ -50,6 +50,7 @@ app.post("/update", middleware_auth, async (req, res) => {
     // (user:{id}:tokens:{token}) instead of scanning all the tokens
     let cursor = 0;
     do {
+        // Move with the cursor
         const reply = await redis_client.scan(cursor, {
             MATCH: `user:${user_id}:tokens:*`,
             COUNT: 100
@@ -61,6 +62,7 @@ app.post("/update", middleware_auth, async (req, res) => {
             const token = key.slice(`user:${user_id}:tokens:`.length);
 
             if(token.length > 0) {
+                // The key => user:{user_id}:tokens:{token} and the token it self => token:{token}
                 keys_to_delete.push(key, `token:${token}`);
             }
         }

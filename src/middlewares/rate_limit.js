@@ -38,12 +38,12 @@ export default function rate_limit({ window_ms = 15 * 60 * 1000, max = 5, prefix
         const key = `rate_limit:${prefix}:${source}`;
 
         try {
-            const count = await redis_client.incr(key);
+            // SET ... NX ... EX creates the window together with its TTL in one
+            // atomic step, so the key can't stay without expiry if this process
+            // dies before counting
+            await redis_client.set(key, 0, { EX: window_seconds, NX: true });
 
-            // First request of the window starts the expiry
-            if(count === 1) {
-                await redis_client.expire(key, window_seconds);
-            }
+            const count = await redis_client.incr(key);
 
             if(count > max) {
                 return res.status(429).json({

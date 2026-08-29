@@ -134,8 +134,8 @@ test("parse_value_from_option_profile parses and validates values", () => {
     assert.equal(profile_controller.parse_value_from_option_profile("aboutme", "hello"), "hello");
     // Values >= MAX_ABOUTME_LENGTH get truncated to the limit
     assert.equal(
-        profile_controller.parse_value_from_option_profile("aboutme", "x".repeat(profile_controller.MAX_ABOUTME_LENGTH + 10)).length,
-        profile_controller.MAX_ABOUTME_LENGTH
+        profile_controller.parse_value_from_option_profile("aboutme", "x".repeat(MAX_ABOUTME_LENGTH + 10)).length,
+        MAX_ABOUTME_LENGTH
     );
     assert.equal(profile_controller.parse_value_from_option_profile("aboutme", 42), undefined);
 

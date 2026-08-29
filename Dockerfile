@@ -10,4 +10,4 @@ RUN npm i
 
 EXPOSE 6570
 
-ENTRYPOINT [ "node", "." ]
+CMD [ "npm", "start" ]

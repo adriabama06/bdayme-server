@@ -10,10 +10,7 @@ mock.module("../../src/database.js", { defaultExport: fake_pg.client });
 mock.module("../../src/redis.js", { defaultExport: fake_redis.client });
 
 const profile_controller = await import("../../src/controller/profile.js");
-
-test("MAX_ABOUTME_LENGTH is 1024", () => {
-    assert.equal(profile_controller.MAX_ABOUTME_LENGTH, 1024);
-});
+const { MAX_ABOUTME_LENGTH } = await import("../../src/constants.js");
 
 test("create_profile validates input", async () => {
     assert.equal(await profile_controller.create_profile({}, "name", new Date()), undefined);

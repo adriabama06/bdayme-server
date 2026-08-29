@@ -6,10 +6,9 @@
  * @prop {Date} birthday TIMESTAMP NOT NULL -- User birthday date
  */
 
-export const MAX_ABOUTME_LENGTH = 1024;
-
 import pg_client from "../database.js";
 import redis_client from "../redis.js";
+import { MAX_ABOUTME_LENGTH } from "../constants.js";
 
 // Never build SQL with columns outside of these lists (SQL injection protection)
 const PROFILE_SELECTABLE_COLUMNS = ["id", "display_name", "aboutme", "created_at"];

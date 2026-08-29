@@ -3,3 +3,5 @@ postgres/
 pgadmin/
 redis-insight/
 postgre/
+# Config is injected at runtime through compose env_file, not baked into the image
+.env

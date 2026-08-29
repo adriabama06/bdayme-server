@@ -3,9 +3,15 @@ name: bdayme
 services:
   server:
     restart: unless-stopped
+    image: bdayme-server
     build:
       context: .
       dockerfile: Dockerfile
+    env_file: .env
+    # Time Docker waits after SIGTERM before SIGKILL. Must be higher than
+    # SHUTDOWN_TIMEOUT_MS (src/index.js, default 30s) so in-flight requests
+    # can finish on scale-down / redeploy.
+    stop_grace_period: 45s
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://127.0.0.1:${PORT:-6570}/healthcheck"]
       interval: 1m30s
@@ -17,16 +23,55 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      nginx:
-        condition: service_started
+      # Migrations run exactly once (one-shot service) BEFORE any replica starts,
+      # so no two replicas race the same ALTER TABLE on boot.
+      dbmigrate:
+        condition: service_completed_successfully
+    labels:
+      # Traefik load-balances every `server` replica round-robin (same labels
+      # on all replicas merge into one Traefik service).
+      - traefik.enable=true
+      - traefik.http.routers.bdayme.rule=PathPrefix(`/api/v0/`)
+      - traefik.http.routers.bdayme.entrypoints=web
+      - traefik.http.routers.bdayme.middlewares=bdayme-strip
+      # Same as the old nginx `location /api/v0/ { proxy_pass http://server:6570/; }`
+      - traefik.http.middlewares.bdayme-strip.stripprefix.prefixes=/api/v0
+      - traefik.http.services.bdayme.loadbalancer.server.port=${PORT:-6570}
 
-  nginx:
+  traefik:
     restart: unless-stopped
-    image: nginx:1.29.0-alpine
+    image: traefik:v3.6.1
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedByDefault=false
+      - --providers.docker.network=bdayme-network
+      - --entryPoints.web.address=:80
+      - --log.level=INFO
+      - "--log.format=common"
+      - "--accesslog=true"
+      - "--accesslog.format=common"
     ports:
       - 6570:80
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    # No depends_on needed: the Docker provider picks the replicas up dynamically
+
+  # One-shot database migration job. Runs automatically before the server
+  # replicas (see depends_on above) and can also be run manually:
+  #   docker compose run --rm dbmigrate
+  #   docker compose run --rm dbmigrate node scripts/check_database_update.js --check
+  dbmigrate:
+    restart: "no"
+    # Same image as `server` (built once, shared)
+    image: bdayme-server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: npm run db:update
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
 
   db:
     restart: unless-stopped
